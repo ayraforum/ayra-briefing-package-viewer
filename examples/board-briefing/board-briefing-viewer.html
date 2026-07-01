@@ -1,0 +1,699 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Board Briefing Package</title>
+<style>
+:root {
+  --magenta: #ea1572;
+  --sapphire: #2e55d1;
+  --tangerine: #f3ab58;
+  --sand: #e9e5dd;
+  --slate: #073642;
+  --ink: #16323c;
+  --muted: #5d6f76;
+  --bg: #f6f3ec;
+  --panel: #ffffff;
+  --line: #ddd6c8;
+  --soft: #f3eee4;
+  --public: #2f8f5b;
+  --board-red: #e0001b;
+  --sticky-offset: 72px;
+  --radius: 8px;
+  --shadow: 0 8px 24px rgba(7, 54, 66, 0.08);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: Poppins, "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+}
+h1, h2, h3, h4 { color: var(--slate); line-height: 1.25; margin: 1.2em 0 0.5em; }
+h1 { font-size: 30px; margin-top: 0; }
+h2 { font-size: 20px; }
+h3 { font-size: 17px; }
+h4 { font-size: 15px; }
+a { color: var(--sapphire); }
+code {
+  background: var(--soft); border: 1px solid var(--line); border-radius: 4px;
+  padding: 0.05em 0.35em; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9em;
+}
+pre { background: var(--soft); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; overflow: auto; }
+pre code { background: none; border: 0; padding: 0; }
+table { width: 100%; border-collapse: collapse; margin: 14px 0; background: #fff; font-size: 14px; }
+th, td { border: 1px solid var(--line); padding: 7px 10px; text-align: left; vertical-align: top; }
+th { background: var(--sand); color: var(--slate); }
+blockquote {
+  margin: 14px 0; padding: 10px 16px; border-left: 4px solid var(--sapphire);
+  background: #eef1fb; border-radius: 0 var(--radius) var(--radius) 0;
+}
+blockquote.callout-warning, blockquote.callout-caution { border-left-color: var(--tangerine); background: #fdf3e3; }
+blockquote.callout-info { border-left-color: var(--sapphire); background: #eef1fb; }
+.merge {
+  background: #fdeef5; border: 1px dashed var(--magenta); border-radius: 4px;
+  padding: 0 4px; color: #b00f57; font-size: 0.92em; white-space: nowrap;
+}
+.top {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--slate); color: #fff;
+  display: flex; align-items: center; gap: 18px; flex-wrap: nowrap;
+  padding: 12px 22px;
+}
+.brand { display: flex; align-items: baseline; gap: 10px; min-width: 130px; }
+.brand .word { font-weight: 700; font-size: 20px; letter-spacing: 0.5px; }
+.brand .word b { color: var(--magenta); }
+.menu-toggle {
+  display: none; align-items: center; justify-content: center; gap: 4px;
+  width: 42px; height: 42px; border: 0; border-radius: 8px;
+  background: rgba(255, 255, 255, 0.12); cursor: pointer;
+}
+.menu-toggle .bars span {
+  display: block; width: 20px; height: 2px; border-radius: 999px;
+  background: #fff;
+}
+.menu-toggle .bars { display: grid; gap: 4px; }
+.tabs { display: flex; gap: 2px; flex-wrap: wrap; }
+.tab {
+  background: none; border: 0; color: #cfd9d6; font: inherit; font-weight: 500; font-size: 14px;
+  padding: 8px 13px; cursor: pointer; border-radius: 8px;
+}
+.tab:hover { color: #fff; }
+.tab.active { color: #fff; background: rgba(255, 255, 255, 0.12); box-shadow: inset 0 -3px 0 var(--magenta); }
+.classification-badge {
+  position: relative; display: inline-flex; align-items: center; width: fit-content;
+  color: var(--slate); background: var(--tangerine); border-radius: 999px;
+  font-weight: 800; letter-spacing: 0.7px; text-transform: uppercase;
+  box-shadow: 0 1px 0 rgba(7, 54, 66, 0.12);
+  cursor: help; outline: none;
+}
+.classification-badge::after {
+  content: attr(data-tooltip);
+  position: absolute; left: 0; top: calc(100% + 9px); z-index: 30;
+  width: min(300px, 72vw); padding: 10px 12px; border-radius: 8px;
+  background: var(--slate); color: #fff; text-transform: none; letter-spacing: 0;
+  font-size: 12px; font-weight: 500; line-height: 1.45;
+  box-shadow: 0 10px 26px rgba(7, 54, 66, 0.2);
+  opacity: 0; pointer-events: none; transform: translateY(-3px);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+.classification-badge:hover::after, .classification-badge:focus-visible::after {
+  opacity: 1; transform: translateY(0);
+}
+.classification-badge:focus-visible { box-shadow: 0 0 0 3px rgba(46, 85, 209, 0.22); }
+.label { font-size: 12px; padding: 5px 11px; }
+.doc-label { margin-left: 8px; padding: 3px 9px; font-size: 10.5px; vertical-align: middle; }
+.label-public { background: var(--public); color: #fff; }
+.label-confidential-staff { background: var(--tangerine); color: var(--slate); }
+.label-confidential-ayra { background: var(--magenta); color: #fff; }
+.label-confidential-member { background: var(--sapphire); color: #fff; }
+.label-confidential-board { background: var(--board-red); color: #fff; }
+.doc-label.label-public { background: var(--public); color: #fff; }
+.doc-label.label-confidential-staff { background: var(--tangerine); color: var(--slate); }
+.doc-label.label-confidential-ayra { background: var(--magenta); color: #fff; }
+.doc-label.label-confidential-member { background: var(--sapphire); color: #fff; }
+.doc-label.label-confidential-board { background: var(--board-red); color: #fff; }
+.searchbar {
+  position: sticky; top: var(--top-height, 58px); z-index: 9;
+  background: #fbf9f4; border-bottom: 1px solid var(--line);
+  padding: 10px 22px; display: flex; justify-content: center;
+}
+.layout.no-search .searchbar { display: none; }
+.searchwrap { display: flex; align-items: center; gap: 10px; width: min(440px, 100%); }
+#search {
+  border: 0; border-radius: 8px; padding: 8px 12px; font: inherit; font-size: 13px;
+  width: 100%; background: #fff; border: 1px solid var(--line);
+}
+#search-count { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.layout { display: grid; grid-template-columns: 310px minmax(0, 1fr); min-height: calc(100vh - 58px); }
+.layout.no-aside { grid-template-columns: 1fr; }
+.layout.no-aside aside { display: none; }
+aside {
+  background: #fbf9f4; border-right: 1px solid var(--line);
+  padding: 18px 14px; position: sticky; top: 58px; height: calc(100vh - 58px); overflow: auto;
+}
+main { padding: 26px 30px 60px; min-width: 0; }
+.shell { max-width: 1000px; margin: 0 auto; }
+.nav-btn {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%;
+  background: none; border: 1px solid transparent; border-radius: 8px;
+  padding: 8px 10px; font: inherit; font-size: 13.5px; color: var(--ink);
+  cursor: pointer; text-align: left;
+}
+.nav-btn:hover { background: var(--soft); }
+.nav-btn.active { background: #fff; border-color: var(--line); font-weight: 600; box-shadow: inset 3px 0 0 var(--magenta); }
+.nav-btn .count {
+  flex: 0 1 auto; font-size: 10.5px; color: var(--muted); background: var(--sand);
+  border-radius: 999px; padding: 1px 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 130px;
+}
+.hero {
+  background: var(--slate); color: #e8eeec; border-radius: 8px;
+  padding: 30px 34px; box-shadow: var(--shadow);
+}
+.hero-kicker {
+  color: var(--tangerine); text-transform: uppercase; letter-spacing: 1px;
+  font-size: 11px; font-weight: 700; margin-bottom: 8px;
+}
+.hero h1 { color: #fff; }
+.hero p { max-width: 76ch; color: #cfd9d6; }
+.hero .audience { color: #fff; font-weight: 500; }
+.label-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+.muted { color: var(--muted); }
+.stats { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+.stat {
+  background: rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 10px 16px;
+  display: grid; gap: 2px; min-width: 120px;
+}
+.stat strong { color: var(--tangerine); font-size: 19px; }
+.stat span { font-size: 12px; color: #cfd9d6; }
+.ov-block { margin-top: 30px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-top: 14px; }
+.tile {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 14px 16px; text-align: left; cursor: pointer; font: inherit;
+  display: grid; gap: 4px; box-shadow: var(--shadow);
+}
+.tile:hover { border-color: var(--magenta); }
+.tile strong { color: var(--slate); }
+.tile span { font-size: 13px; color: var(--muted); }
+.tile small { color: var(--magenta); font-weight: 600; }
+.classification-hero { background: linear-gradient(135deg, var(--slate) 68%, #4a1031); }
+.classification-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px; margin-top: 24px;
+}
+.classification-card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+  box-shadow: var(--shadow); padding: 16px;
+}
+.classification-card p { margin: 12px 0 0; color: var(--muted); }
+.classification-modal {
+  position: fixed; inset: 0; z-index: 40; display: grid; place-items: center;
+  background: rgba(7, 54, 66, 0.58); padding: 24px;
+}
+.classification-modal[hidden] { display: none; }
+.classification-modal-panel {
+  width: min(940px, 100%); max-height: min(760px, 88vh); overflow: auto;
+  background: var(--bg); color: var(--ink); border-radius: 8px;
+  box-shadow: 0 22px 60px rgba(7, 54, 66, 0.34); padding: 22px 24px 26px;
+}
+.classification-modal-head {
+  display: flex; justify-content: space-between; align-items: start; gap: 18px;
+  border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 16px;
+}
+.classification-modal-head h2 { margin: 0; }
+.modal-close {
+  border: 1px solid var(--line); background: #fff; color: var(--slate);
+  border-radius: 8px; font: inherit; font-weight: 700; cursor: pointer;
+  padding: 6px 10px;
+}
+.modal-close:hover { border-color: var(--slate); }
+.classification-strip {
+  position: sticky; top: var(--sticky-offset); z-index: 6;
+  display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: center;
+  gap: 14px; margin: 12px 0 14px; padding: 12px 16px;
+  border-radius: 8px; border: 1px solid rgba(7, 54, 66, 0.12);
+  color: #fff; box-shadow: var(--shadow);
+}
+.classification-strip .doc-label { margin-left: 0; border: 1px solid rgba(255, 255, 255, 0.55); }
+.classification-strip p { margin: 0; font-size: 13px; font-weight: 500; color: inherit; }
+.classification-strip-label { display: flex; gap: 8px; flex-wrap: wrap; }
+.strip-public { background: var(--public); }
+.strip-confidential-staff { background: var(--tangerine); color: var(--slate); }
+.strip-confidential-ayra { background: var(--magenta); }
+.strip-confidential-member { background: var(--sapphire); }
+.strip-confidential-board { background: var(--board-red); }
+.panel-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 6px; }
+.panel-head h2 { margin: 0; }
+.panel-head .meta { color: var(--muted); font-size: 12.5px; }
+.doc-summary { color: var(--muted); max-width: 78ch; }
+.doc-body {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+  box-shadow: var(--shadow); padding: 8px 28px 22px; margin-top: 12px;
+}
+.landing-copy { padding-top: 14px; }
+.toc {
+  display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px;
+  background: var(--soft); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 10px 14px; font-size: 13px;
+}
+.toc a { text-decoration: none; }
+.toc a:hover { text-decoration: underline; }
+.footer-note { margin-top: 40px; color: var(--muted); font-size: 12px; text-align: center; }
+@media (max-width: 980px) {
+  .layout, .layout.no-aside { grid-template-columns: 1fr; }
+  aside { position: static; height: auto; max-height: 42vh; border-right: 0; border-bottom: 1px solid var(--line); }
+  .searchwrap { width: 100%; }
+  .searchbar { padding: 9px 14px; }
+  .classification-strip { grid-template-columns: 1fr; gap: 8px; }
+}
+@media (max-width: 1120px) {
+  .top { gap: 12px; padding: 10px 14px; }
+  .brand { min-width: auto; }
+  .menu-toggle { display: inline-flex; }
+  .tabs {
+    display: none; position: absolute; left: 14px; right: 14px; top: calc(100% + 8px);
+    background: var(--slate); border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 8px; box-shadow: 0 14px 32px rgba(7, 54, 66, 0.26);
+    padding: 8px; grid-template-columns: 1fr; gap: 4px;
+  }
+  .top.menu-open .tabs { display: grid; }
+  .tab { text-align: left; padding: 11px 12px; }
+}
+@media print {
+  .top, aside { display: none; }
+  .layout { display: block; }
+  .doc-body { box-shadow: none; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="word">ayra<b>.</b></span></div>
+  <button class="menu-toggle" type="button" aria-label="Open package menu" aria-expanded="false">
+    <span class="bars" aria-hidden="true"><span></span><span></span><span></span></span>
+  </button>
+  <nav class="tabs"><button class="tab" data-view="start">Start</button><button class="tab" data-view="resolutions">Resolutions</button><button class="tab" data-view="updates">Updates</button><button class="tab" data-view="financials">Financials</button><button class="tab" data-view="references">References</button></nav>
+</header>
+<div class="searchbar">
+  <div class="searchwrap">
+    <span id="search-count"></span>
+    <input id="search" type="search" placeholder="Search package...">
+  </div>
+</div>
+<div class="layout no-search" id="layout">
+  <aside><div class="navpane" id="nav-resolutions" hidden><button class="nav-btn" data-panel="doc-resolutions-01-resolution-index-md"><span>Resolution Index</span><span class="count">resolutions/01-resolution-index.md</span></button><button class="nav-btn" data-panel="doc-resolutions-02-sample-resolution-md"><span>Approve Briefing Package Format</span><span class="count">resolutions/02-sample-resolution.md</span></button><button class="nav-btn" data-panel="doc-resolutions-03-confirm-public-supporting-resolution-md"><span>Confirm Sample Public Supporting Resolution</span><span class="count">resolutions/03-confirm-public-supporting-resolution.md</span></button></div><div class="navpane" id="nav-updates" hidden><button class="nav-btn" data-panel="doc-updates-01-executive-update-md"><span>Executive Update</span><span class="count">updates/01-executive-update.md</span></button><button class="nav-btn" data-panel="doc-updates-02-member-proposal-md"><span>Executive Update</span><span class="count">updates/02-member-proposal.md</span></button></div><div class="navpane" id="nav-financials" hidden><button class="nav-btn" data-panel="doc-financials-00-sample-md"><span>Financials Index</span><span class="count">financials/00-sample.md</span></button></div><div class="navpane" id="nav-references" hidden><button class="nav-btn" data-panel="doc-references-00-sample-md"><span>Key External Material</span><span class="count">references/00-sample.md</span></button><button class="nav-btn" data-panel="doc-references-01-sample-md"><span>TEST</span><span class="count">references/01-sample.md</span></button></div></aside>
+  <main>
+    <div class="shell">
+      <section class="viewpane" id="view-start" data-type="overview" hidden>
+<section class="hero">
+  <div class="hero-kicker">Ayra briefing package</div>
+  <h1>Board Briefing Package</h1>
+  <p>A compact example package for resolutions, updates, and supporting material.</p>
+  <p class="audience">Prepared for Board review.</p>
+  <div class="label-row"><span class="classification-badge label label-confidential-board" tabindex="0" role="button" title="Confidential to the Board. Use for material restricted to Board review, deliberation, or decision-making." aria-label="Show classification reference for CONFIDENTIAL:BOARD" data-tooltip="Confidential to the Board. Use for material restricted to Board review, deliberation, or decision-making.">CONFIDENTIAL:BOARD</span></div>
+  <div class="stats">
+    <div class="stat"><strong>4</strong><span>package areas</span></div>
+    <div class="stat"><strong>8</strong><span>source documents</span></div>
+    <div class="stat"><strong>2026-07-01</strong><span>generated</span></div>
+  </div>
+</section>
+<section class="ov-block">
+  <h2>How to use this browser</h2>
+  <p>Start here for the shape of the package, then use Resolutions for decision items and Updates for current context. The left navigation opens individual documents inside each area.</p>
+  <p class="muted">The header label is the handling rule for the whole package. Individual documents may carry their own labels where an item is less restricted or has a different audience. Click any classification indicator for the full reference.</p>
+</section>
+<section class="ov-block">
+  <h2>Where to find things</h2>
+  <div class="tiles"><button class="tile" data-go="resolutions" data-panel="doc-resolutions-01-resolution-index-md"><strong>Resolutions</strong><span>Decision items, draft resolution language, and supporting notes.</span><small>3 items · Includes CONFIDENTIAL:BOARD, PUBLIC</small></button><button class="tile" data-go="updates" data-panel="doc-updates-01-executive-update-md"><strong>Updates</strong><span>Operating updates and context the Board should read before voting.</span><small>2 items · Includes PUBLIC, CONFIDENTIAL:MEMBER</small></button><button class="tile" data-go="financials" data-panel="doc-financials-00-sample-md"><strong>Financials</strong><span>Board financial reports and analyses.</span><small>1 item · Includes CONFIDENTIAL:BOARD</small></button><button class="tile" data-go="references" data-panel="doc-references-00-sample-md"><strong>References</strong><span>Supporting material, background, and appendices.</span><small>2 items · Includes PUBLIC</small></button></div>
+</section>
+<section class="ov-block doc-body landing-copy"><p>This example shows the package structure we can use when Ayra needs to send a compact briefing as a single HTML file or web link.</p>
+<h3 id="h-package-shape">Package shape</h3>
+<ul><li><strong>Resolutions</strong> holds the decision material.</li><li><strong>Updates</strong> holds current context and status material.</li><li><strong>Financial Documents</strong> holds current and referenced financial documents.</li><li><strong>References</strong> holds information that may be relevant for the Board, typically external to Ayra.</li><li>The generated landing page explains the browser and builds the &quot;where to find things&quot; cards from the package structure.</li></ul>
+<h3 id="h-authoring-note">Authoring note</h3>
+<p>When assembling a real package, keep the source markdown in the owning knowledge-base folder and run the viewer builder against that folder. The output HTML can sit beside the package or be published as a single web link.</p></section></section><section class="viewpane" id="view-resolutions" data-type="docs" hidden>
+<section class="panel" id="doc-resolutions-01-resolution-index-md" hidden data-search="resolution index resolutions/01-resolution-index.md a maintained table of contents for the resolutions included in the package. confidential:board use this file as the maintained list of resolutions in the package. each row in the table should point to one resolution document in this folder.
+
+current resolutions
+
+| # | resolution | file | status | classification | owner |
+| --- | --- | --- | --- | --- | --- |
+| 1 | approve briefing package format | [[02-sample-resolution]] | draft | confidential:board | board chair |
+| 2 | confirm sample public supporting resolution | [[03-confirm-public-supporting-resolution]] | example | public | governance |
+
+reading path
+
+1. review this index first.
+2. open each resolution in order.
+3. read the updates, financials, or references sections where a resolution depends on supporting context.">
+  <div class="panel-head"><h2>Resolution Index</h2><span class="meta">resolutions/01-resolution-index.md</span></div>
+  <div class="classification-strip strip-confidential-board"><div class="classification-strip-label"><span class="classification-badge doc-label label-confidential-board" tabindex="0" role="button" title="Confidential to the Board. Use for material restricted to Board review, deliberation, or decision-making." aria-label="Show classification reference for CONFIDENTIAL:BOARD" data-tooltip="Confidential to the Board. Use for material restricted to Board review, deliberation, or decision-making.">CONFIDENTIAL:BOARD</span></div><p>Confidential to the Board. Use for material restricted to Board review, deliberation, or decision-making.</p></div>
+  <p class="doc-summary">A maintained table of contents for the resolutions included in the package.</p>
+  
+  <div class="doc-body"><p>Use this file as the maintained list of resolutions in the package. Each row in the table should point to one resolution document in this folder.</p>
+<h3 id="h-current-resolutions">Current resolutions</h3>
+<table><thead><tr><th>#</th><th>Resolution</th><th>File</th><th>Status</th><th>Classification</th><th>Owner</th></tr></thead><tbody><tr><td>1</td><td>Approve briefing package format</td><td>02-sample-resolution</td><td>Draft</td><td>CONFIDENTIAL:BOARD</td><td>Board Chair</td></tr><tr><td>2</td><td>Confirm sample public supporting resolution</td><td>03-confirm-public-supporting-resolution</td><td>Example</td><td>PUBLIC</td><td>Governance</td></tr></tbody></table>
+<h3 id="h-reading-path">Reading path</h3>
+<ol><li>Review this index first.</li><li>Open each resolution in order.</li><li>Read the Updates, Financials, or References sections where a resolution depends on supporting context.</li></ol></div>
+</section>
+<section class="panel" id="doc-resolutions-02-sample-resolution-md" hidden data-search="approve briefing package format resolutions/02-sample-resolution.md example board resolution showing the recommended markdown structure for a decision item. confidential:board document control
+
+| field | value |
+| --- | --- |
+| resolution id | br-001 |
+| status | draft |
+| owner | board chair |
+| decision date | [meeting date] |
+| classification | confidential:board |
+
+proposed action
+
+that the board approve the package structure for use in upcoming governance briefings.
+
+rationale
+
+the package viewer gives board readers one place to read resolutions, updates, and supporting material without needing access to the source knowledge base.
+
+draft resolution text
+
+resolved, that the board authorizes the use of a single-page briefing package viewer for governance materials where a self-contained delivery format is useful.
+
+supporting materials
+
+- [[../updates/01-executive-update]]
+- [[../references/00-sample]]
+
+notes
+
+replace this example with real resolution language in the owning knowledge-base folder.">
+  <div class="panel-head"><h2>Approve Briefing Package Format</h2><span class="meta">resolutions/02-sample-resolution.md</span></div>
+  <div class="classification-strip strip-confidential-board"><div class="classification-strip-label"><span class="classification-badge doc-label label-confidential-board" tabindex="0" role="button" title="Confidential to the Board. Use for material restricted to Board review, deliberation, or decision-making." aria-label="Show classification reference for CONFIDENTIAL:BOARD" data-tooltip="Confidential to the Board. Use for material restricted to Board review, deliberation, or decision-making.">CONFIDENTIAL:BOARD</span></div><p>Confidential to the Board. Use for material restricted to Board review, deliberation, or decision-making.</p></div>
+  <p class="doc-summary">Example Board resolution showing the recommended Markdown structure for a decision item.</p>
+  <nav class="toc"><a href="#h-document-control">Document control</a><a href="#h-proposed-action">Proposed action</a><a href="#h-rationale">Rationale</a><a href="#h-draft-resolution-text">Draft resolution text</a><a href="#h-supporting-materials">Supporting materials</a><a href="#h-notes">Notes</a></nav>
+  <div class="doc-body"><h3 id="h-document-control">Document control</h3>
+<table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Resolution ID</td><td>BR-001</td></tr><tr><td>Status</td><td>Draft</td></tr><tr><td>Owner</td><td>Board Chair</td></tr><tr><td>Decision date</td><td><span class="merge">[meeting date]</span></td></tr><tr><td>Classification</td><td>CONFIDENTIAL:BOARD</td></tr></tbody></table>
+<h3 id="h-proposed-action">Proposed action</h3>
+<p>That the Board approve the package structure for use in upcoming governance briefings.</p>
+<h3 id="h-rationale">Rationale</h3>
+<p>The package viewer gives Board readers one place to read resolutions, updates, and supporting material without needing access to the source knowledge base.</p>
+<h3 id="h-draft-resolution-text">Draft resolution text</h3>
+<p>Resolved, that the Board authorizes the use of a single-page briefing package viewer for governance materials where a self-contained delivery format is useful.</p>
+<h3 id="h-supporting-materials">Supporting materials</h3>
+<ul><li>../updates/01-executive-update</li><li>../references/00-sample</li></ul>
+<h3 id="h-notes">Notes</h3>
+<p>Replace this example with real resolution language in the owning knowledge-base folder.</p></div>
+</section>
+<section class="panel" id="doc-resolutions-03-confirm-public-supporting-resolution-md" hidden data-search="confirm sample public supporting resolution resolutions/03-confirm-public-supporting-resolution.md example resolution showing how a public item can sit inside a board-confidential package. public document control
+
+| field | value |
+| --- | --- |
+| resolution id | br-002 |
+| status | example |
+| owner | governance |
+| decision date | [meeting date] |
+| classification | public |
+
+proposed action
+
+that the board confirm this public example resolution as a demonstration of document-level classification.
+
+rationale
+
+the overall package may be confidential:board, while an individual resolution or supporting item may be public. the viewer will keep the package handling rule on the landing page and show the document's own classification on the detail page.
+
+draft resolution text
+
+resolved, that this example public resolution be included to demonstrate how public material can be presented inside a more restricted briefing package.
+
+supporting materials
+
+- [[../references/00-sample]]
+
+notes
+
+for a real package, delete this example or replace it with an actual public resolution.">
+  <div class="panel-head"><h2>Confirm Sample Public Supporting Resolution</h2><span class="meta">resolutions/03-confirm-public-supporting-resolution.md</span></div>
+  <div class="classification-strip strip-public"><div class="classification-strip-label"><span class="classification-badge doc-label label-public" tabindex="0" role="button" title="Public. Use for material that can be shared outside Ayra without additional restriction." aria-label="Show classification reference for PUBLIC" data-tooltip="Public. Use for material that can be shared outside Ayra without additional restriction.">PUBLIC</span></div><p>Public. Use for material that can be shared outside Ayra without additional restriction.</p></div>
+  <p class="doc-summary">Example resolution showing how a public item can sit inside a Board-confidential package.</p>
+  <nav class="toc"><a href="#h-document-control">Document control</a><a href="#h-proposed-action">Proposed action</a><a href="#h-rationale">Rationale</a><a href="#h-draft-resolution-text">Draft resolution text</a><a href="#h-supporting-materials">Supporting materials</a><a href="#h-notes">Notes</a></nav>
+  <div class="doc-body"><h3 id="h-document-control">Document control</h3>
+<table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Resolution ID</td><td>BR-002</td></tr><tr><td>Status</td><td>Example</td></tr><tr><td>Owner</td><td>Governance</td></tr><tr><td>Decision date</td><td><span class="merge">[meeting date]</span></td></tr><tr><td>Classification</td><td>PUBLIC</td></tr></tbody></table>
+<h3 id="h-proposed-action">Proposed action</h3>
+<p>That the Board confirm this public example resolution as a demonstration of document-level classification.</p>
+<h3 id="h-rationale">Rationale</h3>
+<p>The overall package may be <code>CONFIDENTIAL:BOARD</code>, while an individual resolution or supporting item may be <code>PUBLIC</code>. The viewer will keep the package handling rule on the landing page and show the document's own classification on the detail page.</p>
+<h3 id="h-draft-resolution-text">Draft resolution text</h3>
+<p>Resolved, that this example public resolution be included to demonstrate how public material can be presented inside a more restricted briefing package.</p>
+<h3 id="h-supporting-materials">Supporting materials</h3>
+<ul><li>../references/00-sample</li></ul>
+<h3 id="h-notes">Notes</h3>
+<p>For a real package, delete this example or replace it with an actual public resolution.</p></div>
+</section></section><section class="viewpane" id="view-updates" data-type="docs" hidden>
+<section class="panel" id="doc-updates-01-executive-update-md" hidden data-search="executive update updates/01-executive-update.md a short update format for board readers. public current position
+
+the package is designed for short, focused board review. it should make the decision path obvious and keep supporting material close at hand.
+
+what changed
+
+- the viewer is now generic rather than tied to the council campaign.
+- the confidentiality label is explicit in the page chrome.
+- the landing page is generated from the package structure and can be extended with hand-authored markdown.
+
+open items
+
+- replace example material with the real board briefing package.
+- decide where the final html file should be published.">
+  <div class="panel-head"><h2>Executive Update</h2><span class="meta">updates/01-executive-update.md</span></div>
+  <div class="classification-strip strip-public"><div class="classification-strip-label"><span class="classification-badge doc-label label-public" tabindex="0" role="button" title="Public. Use for material that can be shared outside Ayra without additional restriction." aria-label="Show classification reference for PUBLIC" data-tooltip="Public. Use for material that can be shared outside Ayra without additional restriction.">PUBLIC</span></div><p>Public. Use for material that can be shared outside Ayra without additional restriction.</p></div>
+  <p class="doc-summary">A short update format for Board readers.</p>
+  
+  <div class="doc-body"><h3 id="h-current-position">Current position</h3>
+<p>The package is designed for short, focused Board review. It should make the decision path obvious and keep supporting material close at hand.</p>
+<h3 id="h-what-changed">What changed</h3>
+<ul><li>The viewer is now generic rather than tied to the council campaign.</li><li>The confidentiality label is explicit in the page chrome.</li><li>The landing page is generated from the package structure and can be extended with hand-authored markdown.</li></ul>
+<h3 id="h-open-items">Open items</h3>
+<ul><li>Replace example material with the real Board briefing package.</li><li>Decide where the final HTML file should be published.</li></ul></div>
+</section>
+<section class="panel" id="doc-updates-02-member-proposal-md" hidden data-search="executive update updates/02-member-proposal.md a short update format for board readers. confidential:member current position
+
+the package is designed for short, focused board review. it should make the decision path obvious and keep supporting material close at hand.
+
+what changed
+
+- the viewer is now generic rather than tied to the council campaign.
+- the confidentiality label is explicit in the page chrome.
+- the landing page is generated from the package structure and can be extended with hand-authored markdown.
+
+open items
+
+- replace example material with the real board briefing package.
+- decide where the final html file should be published.">
+  <div class="panel-head"><h2>Executive Update</h2><span class="meta">updates/02-member-proposal.md</span></div>
+  <div class="classification-strip strip-confidential-member"><div class="classification-strip-label"><span class="classification-badge doc-label label-confidential-member" tabindex="0" role="button" title="Confidential member-related material. Use when the material identifies, assesses, or depends on a particular member relationship." aria-label="Show classification reference for CONFIDENTIAL:MEMBER" data-tooltip="Confidential member-related material. Use when the material identifies, assesses, or depends on a particular member relationship.">CONFIDENTIAL:MEMBER</span></div><p>Confidential member-related material. Use when the material identifies, assesses, or depends on a particular member relationship.</p></div>
+  <p class="doc-summary">A short update format for Board readers.</p>
+  
+  <div class="doc-body"><h3 id="h-current-position">Current position</h3>
+<p>The package is designed for short, focused Board review. It should make the decision path obvious and keep supporting material close at hand.</p>
+<h3 id="h-what-changed">What changed</h3>
+<ul><li>The viewer is now generic rather than tied to the council campaign.</li><li>The confidentiality label is explicit in the page chrome.</li><li>The landing page is generated from the package structure and can be extended with hand-authored markdown.</li></ul>
+<h3 id="h-open-items">Open items</h3>
+<ul><li>Replace example material with the real Board briefing package.</li><li>Decide where the final HTML file should be published.</li></ul></div>
+</section></section><section class="viewpane" id="view-financials" data-type="docs" hidden>
+<section class="panel" id="doc-financials-00-sample-md" hidden data-search="financials index financials/00-sample.md a board-facing index of the financial statements. confidential:board ">
+  <div class="panel-head"><h2>Financials Index</h2><span class="meta">financials/00-sample.md</span></div>
+  <div class="classification-strip strip-confidential-board"><div class="classification-strip-label"><span class="classification-badge doc-label label-confidential-board" tabindex="0" role="button" title="Confidential to the Board. Use for material restricted to Board review, deliberation, or decision-making." aria-label="Show classification reference for CONFIDENTIAL:BOARD" data-tooltip="Confidential to the Board. Use for material restricted to Board review, deliberation, or decision-making.">CONFIDENTIAL:BOARD</span></div><p>Confidential to the Board. Use for material restricted to Board review, deliberation, or decision-making.</p></div>
+  <p class="doc-summary">A board-facing index of the financial statements.</p>
+  
+  <div class="doc-body"></div>
+</section></section><section class="viewpane" id="view-references" data-type="docs" hidden>
+<section class="panel" id="doc-references-00-sample-md" hidden data-search="key external material references/00-sample.md a list of externam material that may be helpful for the board. public ">
+  <div class="panel-head"><h2>Key External Material</h2><span class="meta">references/00-sample.md</span></div>
+  <div class="classification-strip strip-public"><div class="classification-strip-label"><span class="classification-badge doc-label label-public" tabindex="0" role="button" title="Public. Use for material that can be shared outside Ayra without additional restriction." aria-label="Show classification reference for PUBLIC" data-tooltip="Public. Use for material that can be shared outside Ayra without additional restriction.">PUBLIC</span></div><p>Public. Use for material that can be shared outside Ayra without additional restriction.</p></div>
+  <p class="doc-summary">A list of externam material that may be helpful for the board.</p>
+  
+  <div class="doc-body"></div>
+</section>
+<section class="panel" id="doc-references-01-sample-md" hidden data-search="test references/01-sample.md just a test. public ">
+  <div class="panel-head"><h2>TEST</h2><span class="meta">references/01-sample.md</span></div>
+  <div class="classification-strip strip-public"><div class="classification-strip-label"><span class="classification-badge doc-label label-public" tabindex="0" role="button" title="Public. Use for material that can be shared outside Ayra without additional restriction." aria-label="Show classification reference for PUBLIC" data-tooltip="Public. Use for material that can be shared outside Ayra without additional restriction.">PUBLIC</span></div><p>Public. Use for material that can be shared outside Ayra without additional restriction.</p></div>
+  <p class="doc-summary">just a test.</p>
+  
+  <div class="doc-body"></div>
+</section></section>
+      <p class="footer-note">Generated 2026-07-01 from markdown sources in this package using Ayra Briefing Package Viewer.</p>
+    </div>
+  </main>
+</div>
+<div class="classification-modal" id="classification-modal" hidden>
+  <div class="classification-modal-panel" role="dialog" aria-modal="true" aria-labelledby="classification-modal-title">
+    <div class="classification-modal-head">
+      <h2 id="classification-modal-title">Classification Reference</h2>
+      <button class="modal-close" type="button" data-close-classification>Close</button>
+    </div>
+    
+<section>
+  <h2>Classification Levels</h2>
+  <p>Use these labels to distinguish the handling rule for the overall package from the classification of individual documents inside it.</p>
+</section>
+<section>
+  <h2>How to read the labels</h2>
+  <p>The package label is the outer envelope: it tells the recipient how the delivered package should be handled. A document label describes the specific item and may be less restricted, including public material inside a Board-confidential package.</p>
+</section>
+<section class="classification-grid">
+  
+<article class="classification-card">
+  <div><span class="classification-badge label label-public" tabindex="0" role="button" title="Public. Use for material that can be shared outside Ayra without additional restriction." aria-label="Show classification reference for PUBLIC" data-tooltip="Public. Use for material that can be shared outside Ayra without additional restriction.">PUBLIC</span></div>
+  <p>Public. Use for material that can be shared outside Ayra without additional restriction.</p>
+</article>
+<article class="classification-card">
+  <div><span class="classification-badge label label-confidential-staff" tabindex="0" role="button" title="Confidential to Ayra staff. Use for operational material intended for Ayra staff, not members or public audiences." aria-label="Show classification reference for CONFIDENTIAL:STAFF" data-tooltip="Confidential to Ayra staff. Use for operational material intended for Ayra staff, not members or public audiences.">CONFIDENTIAL:STAFF</span></div>
+  <p>Confidential to Ayra staff. Use for operational material intended for Ayra staff, not members or public audiences.</p>
+</article>
+<article class="classification-card">
+  <div><span class="classification-badge label label-confidential-ayra" tabindex="0" role="button" title="Confidential to Ayra staff and members. Use for member-accessible Ayra material that should not be public." aria-label="Show classification reference for CONFIDENTIAL:AYRA" data-tooltip="Confidential to Ayra staff and members. Use for member-accessible Ayra material that should not be public.">CONFIDENTIAL:AYRA</span></div>
+  <p>Confidential to Ayra staff and members. Use for member-accessible Ayra material that should not be public.</p>
+</article>
+<article class="classification-card">
+  <div><span class="classification-badge label label-confidential-member" tabindex="0" role="button" title="Confidential member-related material. Use when the material identifies, assesses, or depends on a particular member relationship." aria-label="Show classification reference for CONFIDENTIAL:MEMBER" data-tooltip="Confidential member-related material. Use when the material identifies, assesses, or depends on a particular member relationship.">CONFIDENTIAL:MEMBER</span></div>
+  <p>Confidential member-related material. Use when the material identifies, assesses, or depends on a particular member relationship.</p>
+</article>
+<article class="classification-card">
+  <div><span class="classification-badge label label-confidential-board" tabindex="0" role="button" title="Confidential to the Board. Use for material restricted to Board review, deliberation, or decision-making." aria-label="Show classification reference for CONFIDENTIAL:BOARD" data-tooltip="Confidential to the Board. Use for material restricted to Board review, deliberation, or decision-making.">CONFIDENTIAL:BOARD</span></div>
+  <p>Confidential to the Board. Use for material restricted to Board review, deliberation, or decision-making.</p>
+</article>
+</section>
+  </div>
+</div>
+<script>
+const state = { view: "start", panel: {} };
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => Array.from(document.querySelectorAll(s));
+
+function closeMenu() {
+  const top = document.querySelector(".top");
+  if (top) top.classList.remove("menu-open");
+  const toggle = document.querySelector(".menu-toggle");
+  if (toggle) toggle.setAttribute("aria-expanded", "false");
+}
+
+function setView(view, skipHash) {
+  closeMenu();
+  state.view = view;
+  $$(".tab").forEach((b) => b.classList.toggle("active", b.dataset.view === view));
+  $$(".viewpane").forEach((p) => { p.hidden = p.id !== "view-" + view; });
+  $$(".navpane").forEach((p) => { p.hidden = p.id !== "nav-" + view; });
+  const hasNav = !!document.getElementById("nav-" + view);
+  $("#layout").classList.toggle("no-aside", !hasNav);
+  $("#layout").classList.toggle("no-search", !hasNav);
+  $("#search").value = "";
+  applySearch();
+  updateStickyOffset();
+  if (hasNav) {
+    const first = $("#view-" + view + " .panel");
+    const stored = state.panel[view];
+    if (stored && document.getElementById(stored)) setPanel(stored, true);
+    else if (first) setPanel(first.id, true);
+  }
+  if (!skipHash) syncHash();
+  window.scrollTo(0, 0);
+}
+
+function setPanel(id, skipHash) {
+  state.panel[state.view] = id;
+  $$("#view-" + state.view + " .panel").forEach((p) => { p.hidden = p.id !== id; });
+  $$("#nav-" + state.view + " .nav-btn").forEach((b) => b.classList.toggle("active", b.dataset.panel === id));
+  if (!skipHash) syncHash();
+  updateStickyOffset();
+}
+
+function syncHash() {
+  const panel = state.panel[state.view];
+  const hasNav = !!document.getElementById("nav-" + state.view);
+  history.replaceState(null, "", "#" + state.view + (hasNav && panel ? "/" + panel : ""));
+}
+
+function applySearch() {
+  const q = $("#search").value.trim().toLowerCase();
+  $("#search-count").textContent = "";
+  if (state.view === "start") return;
+  let hits = 0;
+  $$("#view-" + state.view + " .panel").forEach((panel) => {
+    const hit = !q || panel.dataset.search.includes(q);
+    panel.hidden = q ? !hit : panel.id !== state.panel[state.view];
+    if (q && hit) hits += 1;
+  });
+  $$("#nav-" + state.view + " .nav-btn").forEach((button) => {
+    const panel = document.getElementById(button.dataset.panel);
+    const hit = !q || (panel && panel.dataset.search.includes(q));
+    button.hidden = !hit;
+  });
+  if (q) $("#search-count").textContent = hits + " match" + (hits === 1 ? "" : "es");
+}
+
+document.addEventListener("click", (event) => {
+  const closeClassification = event.target.closest("[data-close-classification]");
+  if (closeClassification || event.target.id === "classification-modal") {
+    closeClassificationReference();
+    return;
+  }
+  const classificationBadge = event.target.closest(".classification-badge");
+  if (classificationBadge) {
+    openClassificationReference();
+    return;
+  }
+  const menuToggle = event.target.closest(".menu-toggle");
+  if (menuToggle) {
+    const top = document.querySelector(".top");
+    const open = !top.classList.contains("menu-open");
+    top.classList.toggle("menu-open", open);
+    menuToggle.setAttribute("aria-expanded", open ? "true" : "false");
+    return;
+  }
+  const tab = event.target.closest(".tab");
+  if (tab) return setView(tab.dataset.view);
+  const navButton = event.target.closest(".nav-btn");
+  if (navButton) { setPanel(navButton.dataset.panel); window.scrollTo(0, 0); return; }
+  const tile = event.target.closest("[data-go]");
+  if (tile) {
+    setView(tile.dataset.go);
+    if (tile.dataset.panel) setPanel(tile.dataset.panel);
+  }
+});
+
+document.addEventListener("click", (event) => {
+  if (!event.target.closest(".top")) closeMenu();
+});
+
+$("#search").addEventListener("input", applySearch);
+window.addEventListener("resize", () => {
+  closeMenu();
+  updateStickyOffset();
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") closeClassificationReference();
+  if ((event.key === "Enter" || event.key === " ") && event.target.closest(".classification-badge")) {
+    event.preventDefault();
+    openClassificationReference();
+  }
+});
+
+function openClassificationReference() {
+  const modal = document.getElementById("classification-modal");
+  if (!modal) return;
+  modal.hidden = false;
+  const close = modal.querySelector("[data-close-classification]");
+  if (close) close.focus();
+}
+
+function closeClassificationReference() {
+  const modal = document.getElementById("classification-modal");
+  if (modal) modal.hidden = true;
+}
+
+function updateStickyOffset() {
+  const top = document.querySelector(".top");
+  const searchbar = document.querySelector(".searchbar");
+  const topHeight = top ? Math.ceil(top.getBoundingClientRect().height) : 0;
+  const searchHeight = searchbar && !searchbar.hidden && getComputedStyle(searchbar).display !== "none"
+    ? Math.ceil(searchbar.getBoundingClientRect().height)
+    : 0;
+  document.documentElement.style.setProperty("--top-height", topHeight + "px");
+  document.documentElement.style.setProperty("--sticky-offset", (topHeight + searchHeight + 10) + "px");
+}
+
+(function init() {
+  const hash = location.hash.replace(/^#/, "");
+  const [view, panel] = hash.split("/");
+  if (view && document.getElementById("view-" + view)) {
+    if (panel && document.getElementById(panel)) state.panel[view] = panel;
+    return setView(view, true);
+  }
+  setView("start", true);
+})();
+</script>
+</body>
+</html>

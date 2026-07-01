@@ -1,0 +1,37 @@
+{
+  "title": "Board Briefing Package",
+  "subtitle": "A compact example package for resolutions, updates, and supporting material.",
+  "audience": "Prepared for Board review.",
+  "labels": ["CONFIDENTIAL:BOARD"],
+  "output": "board-briefing-viewer.html",
+  "landing": {
+    "file": "00-start-here.md",
+    "intro": "Start here for the shape of the package, then use Resolutions for decision items and Updates for current context. The left navigation opens individual documents inside each area."
+  },
+  "sections": [
+    {
+      "id": "resolutions",
+      "title": "Resolutions",
+      "description": "Decision items, draft resolution language, and supporting notes.",
+      "path": "resolutions"
+    },
+    {
+      "id": "updates",
+      "title": "Updates",
+      "description": "Operating updates and context the Board should read before voting.",
+      "path": "updates"
+    },
+    {
+      "id": "financials",
+      "title": "Financials",
+      "description": "Board financial reports and analyses.",
+      "path": "financials"
+    },
+    {
+      "id": "references",
+      "title": "References",
+      "description": "Supporting material, background, and appendices.",
+      "path": "references"
+    }
+  ]
+}

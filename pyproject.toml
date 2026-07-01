@@ -1,0 +1,10 @@
+[project]
+name = "ayra-briefing-package-viewer"
+version = "0.1.0"
+description = "Build self-contained Ayra briefing package viewers from markdown folders."
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+ayra-package-viewer = "ayra_package_viewer.builder:main"
+
