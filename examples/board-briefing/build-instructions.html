@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Build Instructions</title>
+<style>
+:root {
+  --magenta: #ea1572;
+  --sapphire: #2e55d1;
+  --tangerine: #f3ab58;
+  --sand: #e9e5dd;
+  --slate: #073642;
+  --ink: #16323c;
+  --muted: #5d6f76;
+  --bg: #f6f3ec;
+  --panel: #ffffff;
+  --line: #ddd6c8;
+  --soft: #f3eee4;
+  --public: #2f8f5b;
+  --board-red: #e0001b;
+  --sticky-offset: 72px;
+  --radius: 8px;
+  --shadow: 0 8px 24px rgba(7, 54, 66, 0.08);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: Poppins, "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+}
+h1, h2, h3, h4 { color: var(--slate); line-height: 1.25; margin: 1.2em 0 0.5em; }
+h1 { font-size: 30px; margin-top: 0; }
+h2 { font-size: 20px; }
+h3 { font-size: 17px; }
+h4 { font-size: 15px; }
+a { color: var(--sapphire); }
+code {
+  background: var(--soft); border: 1px solid var(--line); border-radius: 4px;
+  padding: 0.05em 0.35em; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9em;
+}
+pre { background: var(--soft); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; overflow: auto; }
+pre code { background: none; border: 0; padding: 0; }
+table { width: 100%; border-collapse: collapse; margin: 14px 0; background: #fff; font-size: 14px; }
+th, td { border: 1px solid var(--line); padding: 7px 10px; text-align: left; vertical-align: top; }
+th { background: var(--sand); color: var(--slate); }
+blockquote {
+  margin: 14px 0; padding: 10px 16px; border-left: 4px solid var(--sapphire);
+  background: #eef1fb; border-radius: 0 var(--radius) var(--radius) 0;
+}
+blockquote.callout-warning, blockquote.callout-caution { border-left-color: var(--tangerine); background: #fdf3e3; }
+blockquote.callout-info { border-left-color: var(--sapphire); background: #eef1fb; }
+.merge {
+  background: #fdeef5; border: 1px dashed var(--magenta); border-radius: 4px;
+  padding: 0 4px; color: #b00f57; font-size: 0.92em; white-space: nowrap;
+}
+.top {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--slate); color: #fff;
+  display: flex; align-items: center; gap: 18px; flex-wrap: nowrap;
+  padding: 12px 22px;
+}
+.brand { display: flex; align-items: baseline; gap: 10px; min-width: 130px; }
+.brand .word { font-weight: 700; font-size: 20px; letter-spacing: 0.5px; }
+.brand .word b { color: var(--magenta); }
+.menu-toggle {
+  display: none; align-items: center; justify-content: center; gap: 4px;
+  width: 42px; height: 42px; border: 0; border-radius: 8px;
+  background: rgba(255, 255, 255, 0.12); cursor: pointer;
+}
+.menu-toggle .bars span {
+  display: block; width: 20px; height: 2px; border-radius: 999px;
+  background: #fff;
+}
+.menu-toggle .bars { display: grid; gap: 4px; }
+.tabs { display: flex; gap: 2px; flex-wrap: wrap; }
+.tab {
+  background: none; border: 0; color: #cfd9d6; font: inherit; font-weight: 500; font-size: 14px;
+  padding: 8px 13px; cursor: pointer; border-radius: 8px;
+}
+.tab:hover { color: #fff; }
+.tab.active { color: #fff; background: rgba(255, 255, 255, 0.12); box-shadow: inset 0 -3px 0 var(--magenta); }
+.classification-badge {
+  position: relative; display: inline-flex; align-items: center; width: fit-content;
+  color: var(--slate); background: var(--tangerine); border-radius: 999px;
+  font-weight: 800; letter-spacing: 0.7px; text-transform: uppercase;
+  box-shadow: 0 1px 0 rgba(7, 54, 66, 0.12);
+  cursor: help; outline: none;
+}
+.classification-badge::after {
+  content: attr(data-tooltip);
+  position: absolute; left: 0; top: calc(100% + 9px); z-index: 30;
+  width: min(300px, 72vw); padding: 10px 12px; border-radius: 8px;
+  background: var(--slate); color: #fff; text-transform: none; letter-spacing: 0;
+  font-size: 12px; font-weight: 500; line-height: 1.45;
+  box-shadow: 0 10px 26px rgba(7, 54, 66, 0.2);
+  opacity: 0; pointer-events: none; transform: translateY(-3px);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+.classification-badge:hover::after, .classification-badge:focus-visible::after {
+  opacity: 1; transform: translateY(0);
+}
+.classification-badge:focus-visible { box-shadow: 0 0 0 3px rgba(46, 85, 209, 0.22); }
+.label { font-size: 12px; padding: 5px 11px; }
+.doc-label { margin-left: 8px; padding: 3px 9px; font-size: 10.5px; vertical-align: middle; }
+.label-public { background: var(--public); color: #fff; }
+.label-confidential-staff { background: var(--tangerine); color: var(--slate); }
+.label-confidential-ayra { background: var(--magenta); color: #fff; }
+.label-confidential-member { background: var(--sapphire); color: #fff; }
+.label-confidential-board { background: var(--board-red); color: #fff; }
+.doc-label.label-public { background: var(--public); color: #fff; }
+.doc-label.label-confidential-staff { background: var(--tangerine); color: var(--slate); }
+.doc-label.label-confidential-ayra { background: var(--magenta); color: #fff; }
+.doc-label.label-confidential-member { background: var(--sapphire); color: #fff; }
+.doc-label.label-confidential-board { background: var(--board-red); color: #fff; }
+.searchbar {
+  position: sticky; top: var(--top-height, 58px); z-index: 9;
+  background: #fbf9f4; border-bottom: 1px solid var(--line);
+  padding: 10px 22px; display: flex; justify-content: center;
+}
+.layout.no-search .searchbar { display: none; }
+.searchwrap { display: flex; align-items: center; gap: 10px; width: min(440px, 100%); }
+#search {
+  border: 0; border-radius: 8px; padding: 8px 12px; font: inherit; font-size: 13px;
+  width: 100%; background: #fff; border: 1px solid var(--line);
+}
+#search-count { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.layout { display: grid; grid-template-columns: 310px minmax(0, 1fr); min-height: calc(100vh - 58px); }
+.layout.no-aside { grid-template-columns: 1fr; }
+.layout.no-aside aside { display: none; }
+aside {
+  background: #fbf9f4; border-right: 1px solid var(--line);
+  padding: 18px 14px; position: sticky; top: 58px; height: calc(100vh - 58px); overflow: auto;
+}
+main { padding: 26px 30px 60px; min-width: 0; }
+.shell { max-width: 1000px; margin: 0 auto; }
+.nav-group {
+  margin-bottom: 14px; padding: 11px 10px 10px 12px;
+  background: #f0e8dc; border: 1px solid #d9cdbb; border-left: 4px solid var(--tangerine);
+  border-radius: 8px;
+}
+.nav-group + .nav-group { margin-top: 14px; }
+.nav-group-head {
+  display: grid; gap: 6px; padding: 0 2px 10px; color: var(--slate);
+}
+.nav-group-head strong {
+  width: fit-content; max-width: 100%; padding: 3px 7px;
+  background: rgba(7, 54, 66, 0.09); border-radius: 4px;
+  color: var(--slate); font-size: 10.5px; line-height: 1.25;
+  letter-spacing: 0.8px; text-transform: uppercase;
+}
+.nav-group-head span {
+  color: var(--muted); font-size: 12px; line-height: 1.35; font-style: italic;
+}
+.nav-btn {
+  display: grid; gap: 3px; width: 100%;
+  background: none; border: 1px solid transparent; border-radius: 8px;
+  padding: 8px 10px; font: inherit; color: var(--ink);
+  cursor: pointer; text-align: left;
+}
+.nav-group .nav-btn { padding-left: 9px; padding-right: 8px; }
+.nav-btn:hover { background: rgba(255, 255, 255, 0.58); }
+.nav-btn.active { background: #fff; border-color: var(--line); box-shadow: inset 3px 0 0 var(--magenta); }
+.nav-title {
+  font-size: 13.5px; line-height: 1.35; font-weight: 500;
+}
+.nav-btn.active .nav-title { font-weight: 700; }
+.nav-source {
+  display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: var(--muted); font-size: 10.5px; line-height: 1.25; opacity: 0.62;
+}
+.hero {
+  background: var(--slate); color: #e8eeec; border-radius: 8px;
+  padding: 30px 34px; box-shadow: var(--shadow);
+}
+.hero-kicker {
+  color: var(--tangerine); text-transform: uppercase; letter-spacing: 1px;
+  font-size: 11px; font-weight: 700; margin-bottom: 8px;
+}
+.hero h1 { color: #fff; }
+.hero p { max-width: 76ch; color: #cfd9d6; }
+.hero .audience { color: #fff; font-weight: 500; }
+.label-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+.muted { color: var(--muted); }
+.stats { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+.stat {
+  background: rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 10px 16px;
+  display: grid; gap: 2px; min-width: 120px;
+}
+.stat strong { color: var(--tangerine); font-size: 19px; }
+.stat span { font-size: 12px; color: #cfd9d6; }
+.ov-block { margin-top: 30px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-top: 14px; }
+.tile {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 14px 16px; text-align: left; cursor: pointer; font: inherit;
+  display: grid; gap: 4px; box-shadow: var(--shadow);
+}
+.tile:hover { border-color: var(--magenta); }
+.tile strong { color: var(--slate); }
+.tile span { font-size: 13px; color: var(--muted); }
+.tile small { color: var(--magenta); font-weight: 600; }
+.classification-hero { background: linear-gradient(135deg, var(--slate) 68%, #4a1031); }
+.classification-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px; margin-top: 24px;
+}
+.classification-card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+  box-shadow: var(--shadow); padding: 16px;
+}
+.classification-card p { margin: 12px 0 0; color: var(--muted); }
+.classification-card small { display: block; margin-top: 10px; color: var(--muted); font-weight: 700; }
+.attachment-card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+  box-shadow: var(--shadow); padding: 18px 20px; margin-top: 14px;
+}
+.attachment-card strong { color: var(--slate); font-size: 16px; }
+.attachment-card p { color: var(--muted); margin: 8px 0 14px; }
+.btn-link {
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 8px; background: var(--sapphire); color: #fff; text-decoration: none;
+  font-weight: 700; padding: 8px 13px;
+}
+.btn-link:hover { background: #2547ad; }
+.classification-modal {
+  position: fixed; inset: 0; z-index: 40; display: grid; place-items: center;
+  background: rgba(7, 54, 66, 0.58); padding: 24px;
+}
+.classification-modal[hidden] { display: none; }
+.classification-modal-panel {
+  width: min(940px, 100%); max-height: min(760px, 88vh); overflow: auto;
+  background: var(--bg); color: var(--ink); border-radius: 8px;
+  box-shadow: 0 22px 60px rgba(7, 54, 66, 0.34); padding: 22px 24px 26px;
+}
+.classification-modal-head {
+  display: flex; justify-content: space-between; align-items: start; gap: 18px;
+  border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 16px;
+}
+.classification-modal-head h2 { margin: 0; }
+.modal-close {
+  border: 1px solid var(--line); background: #fff; color: var(--slate);
+  border-radius: 8px; font: inherit; font-weight: 700; cursor: pointer;
+  padding: 6px 10px;
+}
+.modal-close:hover { border-color: var(--slate); }
+.classification-strip {
+  position: sticky; top: var(--sticky-offset); z-index: 6;
+  display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: center;
+  gap: 14px; margin: 12px 0 14px; padding: 12px 16px;
+  border-radius: 8px; border: 1px solid rgba(7, 54, 66, 0.12);
+  color: #fff; box-shadow: var(--shadow);
+}
+.classification-strip .doc-label { margin-left: 0; border: 1px solid rgba(255, 255, 255, 0.55); }
+.classification-strip p { margin: 0; font-size: 13px; font-weight: 500; color: inherit; }
+.classification-strip-label { display: flex; gap: 8px; flex-wrap: wrap; }
+.strip-public { background: var(--public); }
+.strip-confidential-staff { background: var(--tangerine); color: var(--slate); }
+.strip-confidential-ayra { background: var(--magenta); }
+.strip-confidential-member { background: var(--sapphire); }
+.strip-confidential-board { background: var(--board-red); }
+.panel-head { display: grid; gap: 5px; margin-bottom: 6px; }
+.panel-head h2 { margin: 0; }
+.source-path {
+  margin: 0; color: var(--muted); font-size: 11.5px; line-height: 1.35;
+  overflow-wrap: anywhere; opacity: 0.66;
+}
+.source-path span {
+  margin-right: 5px; color: var(--slate); font-size: 10px; font-weight: 700;
+  letter-spacing: 0.6px; text-transform: uppercase; opacity: 0.68;
+}
+.doc-summary { color: var(--muted); max-width: 78ch; }
+.doc-body {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+  box-shadow: var(--shadow); padding: 8px 28px 22px; margin-top: 12px;
+}
+.landing-copy { padding-top: 14px; }
+.toc {
+  display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px;
+  background: var(--soft); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 10px 14px; font-size: 13px;
+}
+.toc a { text-decoration: none; }
+.toc a:hover { text-decoration: underline; }
+.footer-note { margin-top: 40px; color: var(--muted); font-size: 12px; text-align: center; }
+.instructions-shell { padding: 26px 30px 60px; }
+.instructions-body { margin-top: 22px; }
+.instructions-body h2 { margin-top: 1.8em; }
+.instructions-body h3 { margin-top: 1.5em; }
+@media (max-width: 980px) {
+  .layout, .layout.no-aside { grid-template-columns: 1fr; }
+  aside { position: static; height: auto; max-height: 42vh; border-right: 0; border-bottom: 1px solid var(--line); }
+  .searchwrap { width: 100%; }
+  .searchbar { padding: 9px 14px; }
+  .classification-strip { grid-template-columns: 1fr; gap: 8px; }
+}
+@media (max-width: 1120px) {
+  .top { gap: 12px; padding: 10px 14px; }
+  .brand { min-width: auto; }
+  .menu-toggle { display: inline-flex; }
+  .tabs {
+    display: none; position: absolute; left: 14px; right: 14px; top: calc(100% + 8px);
+    background: var(--slate); border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 8px; box-shadow: 0 14px 32px rgba(7, 54, 66, 0.26);
+    padding: 8px; grid-template-columns: 1fr; gap: 4px;
+  }
+  .top.menu-open .tabs { display: grid; }
+  .tab { text-align: left; padding: 11px 12px; }
+}
+@media print {
+  .top, aside { display: none; }
+  .layout { display: block; }
+  .doc-body { box-shadow: none; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="word">ayra<b>.</b></span></div>
+  <nav class="tabs"><a class="tab active" href="board-briefing-viewer.html">Back to package</a></nav>
+</header>
+<main>
+  <div class="shell instructions-shell">
+    <section class="hero">
+      <div class="hero-kicker">Ayra Briefing Package Viewer</div>
+      <h1>Build Instructions</h1>
+      <p>Use these instructions to assemble a package from Markdown files and rebuild the HTML viewer.</p>
+    </section>
+    <div class="doc-body instructions-body"><h2 id="h-authoring-overview">Authoring Overview</h2>
+<p>This guide shows the Markdown patterns used by the Ayra Briefing Package Viewer. Copy these blocks into a package folder and edit the placeholders.</p>
+<h3 id="h-package-folder">Package Folder</h3>
+<p>Create one folder for the package:</p>
+<pre><code>board-briefing/
+  package-viewer.json
+  00-start-here.md
+  resolutions/
+    01-resolution-index.md
+    02-first-resolution.md
+  updates/
+    01-executive-update.md
+  references/
+    01-background-note.md</code></pre>
+<p>Top-level folders become package areas. If <code>package-viewer.json</code> lists sections, those sections appear first; other folders with Markdown are discovered automatically unless <code>&amp;quot;auto_discover_sections&amp;quot;: false</code> is set.</p>
+<p>Use external configured documents when the package should include a canonical source file that lives elsewhere, such as a formal resolution in a <code>board-resolutions/</code> folder. This avoids copying resolution text into the package and creating drift. In <code>package-viewer.json</code>, add a <code>documents</code> list to the section:</p>
+<pre><code>{
+  &quot;id&quot;: &quot;resolutions&quot;,
+  &quot;title&quot;: &quot;Resolutions&quot;,
+  &quot;path&quot;: &quot;resolutions&quot;,
+  &quot;documents&quot;: [
+    &quot;01-resolution-index.md&quot;,
+    {
+      &quot;source&quot;: &quot;../../board-resolutions/drafts/2026-001-example.md&quot;,
+      &quot;display_path&quot;: &quot;board-resolutions/drafts/2026-001-example.md&quot;,
+      &quot;order&quot;: 2
+    }
+  ]
+}</code></pre>
+<p>Relative <code>source</code> paths are resolved from the package root first, then from the section folder. Use <code>display_path</code> to show a stable package-friendly path in the generated viewer.</p>
+<p>Use grouped sections when a package area needs hierarchy inside the left navigation. For example, Key Material can follow agenda topics instead of listing every document as a peer:</p>
+<pre><code>{
+  &quot;id&quot;: &quot;key-material&quot;,
+  &quot;title&quot;: &quot;Key Material&quot;,
+  &quot;path&quot;: &quot;key-material&quot;,
+  &quot;groups&quot;: [
+    {
+      &quot;id&quot;: &quot;agenda-2&quot;,
+      &quot;title&quot;: &quot;Agenda Topic 2 — Updates&quot;,
+      &quot;description&quot;: &quot;Status context for the no-vote update segment.&quot;,
+      &quot;documents&quot;: [
+        &quot;01-executive-update.md&quot;,
+        &quot;02-calendar-status.md&quot;
+      ]
+    },
+    {
+      &quot;id&quot;: &quot;agenda-5&quot;,
+      &quot;title&quot;: &quot;Agenda Topic 5 — GFC Advice&quot;,
+      &quot;description&quot;: &quot;Entity-boundary advice received or pending.&quot;,
+      &quot;documents&quot;: [
+        &quot;03-gfc-advice-status.md&quot;
+      ]
+    }
+  ]
+}</code></pre>
+<h3 id="h-markdown-patterns">Markdown Patterns</h3>
+<p>Copy-paste patterns live in one place to avoid drift:</p>
+<ul><li><a href="https://github.com/ayraforum/ayra-briefing-package-viewer/blob/main/skills/build-briefing-package/references/markdown-patterns.md">Markdown patterns</a></li></ul>
+<p>For governance packages, use the reusable resolution templates:</p>
+<ul><li><a href="https://github.com/ayraforum/ayra-briefing-package-viewer/blob/main/templates/resolution-index.md">Resolution index template</a></li><li><a href="https://github.com/ayraforum/ayra-briefing-package-viewer/blob/main/templates/resolution.md">Resolution template</a></li></ul>
+<p>Financial statements and other PDFs should be referenced as attachments, not embedded. Put the PDF in the relevant package folder, such as <code>financials/</code>, and include a Markdown index that describes what the PDF is and how it should be read.</p>
+<h3 id="h-classification-values">Classification Values</h3>
+<p>Use one of these values in <code>labels</code>, <code>label</code>, <code>classification</code>, or <code>confidentiality</code> frontmatter:</p>
+<table><thead><tr><th>Value</th><th>Use when</th></tr></thead><tbody><tr><td>PUBLIC</td><td>The item can be shared outside Ayra.</td></tr><tr><td>CONFIDENTIAL:BOARD</td><td>The item is Board-only.</td></tr><tr><td>CONFIDENTIAL:MEMBER</td><td>The item relates to a specific member or members.</td></tr><tr><td>CONFIDENTIAL:AYRA</td><td>The item is for Ayra staff and members.</td></tr><tr><td>CONFIDENTIAL:STAFF</td><td>The item is for Ayra staff only.</td></tr></tbody></table>
+<p>The classification levels are configured in <a href="https://github.com/ayraforum/ayra-briefing-package-viewer/blob/main/ayra_package_viewer/classification-levels.json">classification-levels.json</a>. Higher numeric values mean more confidential and control sorting/priority.</p>
+<h3 id="h-build">Build</h3>
+<p>Install the builder once:</p>
+<pre><code>pipx install git+https://github.com/ayraforum/ayra-briefing-package-viewer.git</code></pre>
+<p>Then build packages from anywhere:</p>
+<pre><code>ayra-package-viewer path/to/package-folder</code></pre>
+<h3 id="h-agent-instructions-for-governance-repositories">Agent Instructions for Governance Repositories</h3>
+<p>When a governance repository will regularly produce briefing packages, add an agent-facing instruction file that points agents to this viewer and its skill.</p>
+<p>For Codex, add or update <code>AGENTS.md</code> in the governance repo:</p>
+<pre><code># AGENTS.md
+
+When assembling Board, member, election, nomination, nominee, governance, or update briefing packages, use the Ayra Briefing Package Viewer.
+
+Viewer repo:
+
+`https://github.com/ayraforum/ayra-briefing-package-viewer`
+
+Agent skill:
+
+`https://github.com/ayraforum/ayra-briefing-package-viewer/blob/main/skills/build-briefing-package/SKILL.md`
+
+Before building a package:
+
+1. Read the skill file.
+2. If copy-paste Markdown patterns are needed, read `https://github.com/ayraforum/ayra-briefing-package-viewer/blob/main/skills/build-briefing-package/references/markdown-patterns.md`.
+3. Use the viewer repo templates for governance resolutions:
+   - `https://github.com/ayraforum/ayra-briefing-package-viewer/blob/main/templates/resolution-index.md`
+   - `https://github.com/ayraforum/ayra-briefing-package-viewer/blob/main/templates/resolution.md`
+4. Keep package authoring instructions out of delivered package content.
+5. Build with:
+
+```bash
+ayra-package-viewer path/to/package-folder
+```</code></pre>
+<p>For Claude, add or update <code>CLAUDE.md</code> in the governance repo with the same operational instruction:</p>
+<pre><code># CLAUDE.md
+
+When assembling Board, member, election, nomination, nominee, governance, or update briefing packages, use the Ayra Briefing Package Viewer.
+
+Read this workflow before building a package:
+
+`https://github.com/ayraforum/ayra-briefing-package-viewer/blob/main/skills/build-briefing-package/SKILL.md`
+
+Use copy-paste Markdown patterns from:
+
+`https://github.com/ayraforum/ayra-briefing-package-viewer/blob/main/skills/build-briefing-package/references/markdown-patterns.md`
+
+Use resolution templates from:
+
+- `https://github.com/ayraforum/ayra-briefing-package-viewer/blob/main/templates/resolution-index.md`
+- `https://github.com/ayraforum/ayra-briefing-package-viewer/blob/main/templates/resolution.md`
+
+Build with:
+
+`ayra-package-viewer path/to/package-folder`</code></pre>
+<p>If the governance repo should carry its own copy of the agent instructions, copy the skill files into that repo. This makes the governance repo usable on another machine even if the viewer repo is checked out somewhere else, or not checked out at all:</p>
+<pre><code>governance-repo/
+  .agents/
+    skills/
+      build-briefing-package/
+        SKILL.md
+        references/
+          markdown-patterns.md</code></pre>
+<p>Then point <code>AGENTS.md</code> and <code>CLAUDE.md</code> to <code>.agents/skills/build-briefing-package/SKILL.md</code> inside that governance repo.</p>
+<h2 id="h-copy-paste-markdown-patterns">Copy-Paste Markdown Patterns</h2>
+<p>Use these patterns when assembling a package from loose Markdown files.</p>
+<h3 id="h-package-config">Package Config</h3>
+<p>Create <code>package-viewer.json</code> in the package folder:</p>
+<pre><code>{
+  &quot;title&quot;: &quot;Board Briefing Package&quot;,
+  &quot;subtitle&quot;: &quot;A compact package for resolutions, updates, and supporting material.&quot;,
+  &quot;audience&quot;: &quot;Prepared for Board review.&quot;,
+  &quot;labels&quot;: [&quot;CONFIDENTIAL:BOARD&quot;],
+  &quot;output&quot;: &quot;board-briefing-viewer.html&quot;,
+  &quot;landing&quot;: {
+    &quot;file&quot;: &quot;00-start-here.md&quot;,
+    &quot;intro&quot;: &quot;Start here for the shape of the package. Use the package areas to find decision items, updates, and supporting material.&quot;
+  },
+  &quot;sections&quot;: [
+    {
+      &quot;id&quot;: &quot;resolutions&quot;,
+      &quot;title&quot;: &quot;Resolutions&quot;,
+      &quot;description&quot;: &quot;Decision items, draft resolution language, and supporting notes.&quot;,
+      &quot;path&quot;: &quot;resolutions&quot;
+    },
+    {
+      &quot;id&quot;: &quot;updates&quot;,
+      &quot;title&quot;: &quot;Updates&quot;,
+      &quot;description&quot;: &quot;Operating updates and current context.&quot;,
+      &quot;path&quot;: &quot;updates&quot;
+    }
+  ]
+}</code></pre>
+<p>When a package should include canonical Markdown that lives outside the package folder, use configured document objects instead of copying the file:</p>
+<pre><code>{
+  &quot;id&quot;: &quot;resolutions&quot;,
+  &quot;title&quot;: &quot;Resolutions&quot;,
+  &quot;description&quot;: &quot;Decision items, draft resolution language, and supporting notes.&quot;,
+  &quot;path&quot;: &quot;resolutions&quot;,
+  &quot;documents&quot;: [
+    &quot;01-resolution-index.md&quot;,
+    {
+      &quot;source&quot;: &quot;../../board-resolutions/drafts/2026-001-example.md&quot;,
+      &quot;display_path&quot;: &quot;board-resolutions/drafts/2026-001-example.md&quot;,
+      &quot;order&quot;: 2
+    }
+  ]
+}</code></pre>
+<p>Relative <code>source</code> paths are resolved from the package root first, then from the section folder. Optional fields include <code>display_path</code>, <code>title</code>, <code>summary</code>, <code>labels</code>, and <code>order</code>.</p>
+<p>When a section needs internal hierarchy, use <code>groups</code> instead of a flat <code>documents</code> list:</p>
+<pre><code>{
+  &quot;id&quot;: &quot;key-material&quot;,
+  &quot;title&quot;: &quot;Key Material&quot;,
+  &quot;description&quot;: &quot;Supporting material grouped by agenda topic.&quot;,
+  &quot;path&quot;: &quot;key-material&quot;,
+  &quot;groups&quot;: [
+    {
+      &quot;id&quot;: &quot;agenda-2&quot;,
+      &quot;title&quot;: &quot;Agenda Topic 2 — Updates&quot;,
+      &quot;description&quot;: &quot;Status context for the no-vote update segment.&quot;,
+      &quot;documents&quot;: [
+        &quot;01-executive-update.md&quot;,
+        &quot;02-calendar-status.md&quot;
+      ]
+    }
+  ]
+}</code></pre>
+<h3 id="h-start-page">Start Page</h3>
+<p>Create <code>00-start-here.md</code>:</p>
+<pre><code># Board Briefing Package
+
+This package collects the materials needed for Board review.
+
+## Package shape
+
+- **Resolutions** holds decision items.
+- **Updates** holds current context.
+- **References** holds supporting material.
+
+## Reading path
+
+1. Start with the resolution index.
+2. Read supporting updates where a resolution depends on current context.
+3. Use references for background material.</code></pre>
+<h3 id="h-ordinary-document">Ordinary Document</h3>
+<pre><code>---
+title: Executive Update
+summary: One sentence explaining what this document contains.
+confidentiality: CONFIDENTIAL:BOARD
+order: 1
+---
+# Executive Update
+
+## Current position
+
+Write the short update here.
+
+## What changed
+
+- First change.
+- Second change.
+
+## Open items
+
+- First open item.
+- Second open item.</code></pre>
+<h3 id="h-pdf-attachment">PDF Attachment</h3>
+<p>Use PDFs as package attachments, not embedded content. Put the PDF in the relevant folder, for example:</p>
+<pre><code>financials/
+  01-financials-index.md
+  2026-q2-financial-statements.pdf</code></pre>
+<p>Create a Markdown index beside the PDF:</p>
+<pre><code>---
+title: Financials Index
+summary: Board-facing index of the financial statements included in the package.
+confidentiality: CONFIDENTIAL:BOARD
+order: 1
+---
+# Financials Index
+
+## Included statements
+
+| Statement | File | Notes |
+| --- | --- | --- |
+| Q2 financial statements | [[2026-q2-financial-statements.pdf]] | Review before the budget resolution. |</code></pre>
+<p>The viewer can list PDF files and link to them. It does not embed PDF contents into the generated HTML.</p>
+<h3 id="h-classification-config">Classification Config</h3>
+<p>Classification levels are defined in <code>ayra_package_viewer/classification-levels.json</code>:</p>
+<pre><code>{
+  &quot;label&quot;: &quot;CONFIDENTIAL:BOARD&quot;,
+  &quot;visible_label&quot;: &quot;CONFIDENTIAL:BOARD&quot;,
+  &quot;description&quot;: &quot;Confidential to the Board. Use for material restricted to Board review, deliberation, or decision-making.&quot;,
+  &quot;value&quot;: 40
+}</code></pre>
+<p>Higher <code>value</code> means more confidential.</p>
+<h3 id="h-resolution-index">Resolution Index</h3>
+<pre><code>---
+title: Resolution Index
+summary: A maintained table of contents for the resolutions included in the package.
+confidentiality: CONFIDENTIAL:BOARD
+order: 1
+---
+# Resolution Index
+
+Use this file as the maintained list of resolutions in the package. Each row in the table should point to one resolution document in this folder.
+
+## Current resolutions
+
+| # | Resolution | File | Status | Classification | Owner |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Approve annual budget | [[02-approve-annual-budget]] | Draft | CONFIDENTIAL:BOARD | Treasurer |
+| 2 | Confirm public supporting item | [[03-confirm-public-supporting-item]] | Draft | PUBLIC | Governance |
+
+## Reading path
+
+1. Review this index first.
+2. Open each resolution in order.
+3. Read supporting sections where a resolution depends on context.</code></pre>
+<h3 id="h-resolution-document">Resolution Document</h3>
+<pre><code>---
+title: Approve Annual Budget
+summary: One sentence explaining what the Board is being asked to decide.
+confidentiality: CONFIDENTIAL:BOARD
+order: 2
+---
+# Approve Annual Budget
+
+## Document control
+
+| Field | Value |
+| --- | --- |
+| Resolution ID | BR-002 |
+| Status | Draft |
+| Owner | Treasurer |
+| Decision date | [meeting date] |
+| Classification | CONFIDENTIAL:BOARD |
+
+## Proposed action
+
+That the Board approve the annual budget for [period].
+
+## Rationale
+
+Explain why the decision is needed now.
+
+## Draft resolution text
+
+Resolved, that [formal resolution language].
+
+## Supporting materials
+
+- [[../financials/01-budget-summary]]
+- [[../updates/01-executive-update]]
+
+## Notes
+
+Add drafting notes, dependencies, or open questions.</code></pre></div>
+    <p class="footer-note">Generated 2026-07-06 from the viewer authoring instructions.</p>
+  </div>
+</main>
+</body>
+</html>

@@ -8,3 +8,8 @@ dependencies = []
 [project.scripts]
 ayra-package-viewer = "ayra_package_viewer.builder:main"
 
+[tool.setuptools.packages.find]
+include = ["ayra_package_viewer*"]
+
+[tool.setuptools.package-data]
+ayra_package_viewer = ["classification-levels.json", "instructions/*.md"]

@@ -138,17 +138,40 @@ aside {
 }
 main { padding: 26px 30px 60px; min-width: 0; }
 .shell { max-width: 1000px; margin: 0 auto; }
+.nav-group {
+  margin-bottom: 14px; padding: 11px 10px 10px 12px;
+  background: #f0e8dc; border: 1px solid #d9cdbb; border-left: 4px solid var(--tangerine);
+  border-radius: 8px;
+}
+.nav-group + .nav-group { margin-top: 14px; }
+.nav-group-head {
+  display: grid; gap: 6px; padding: 0 2px 10px; color: var(--slate);
+}
+.nav-group-head strong {
+  width: fit-content; max-width: 100%; padding: 3px 7px;
+  background: rgba(7, 54, 66, 0.09); border-radius: 4px;
+  color: var(--slate); font-size: 10.5px; line-height: 1.25;
+  letter-spacing: 0.8px; text-transform: uppercase;
+}
+.nav-group-head span {
+  color: var(--muted); font-size: 12px; line-height: 1.35; font-style: italic;
+}
 .nav-btn {
-  display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%;
+  display: grid; gap: 3px; width: 100%;
   background: none; border: 1px solid transparent; border-radius: 8px;
-  padding: 8px 10px; font: inherit; font-size: 13.5px; color: var(--ink);
+  padding: 8px 10px; font: inherit; color: var(--ink);
   cursor: pointer; text-align: left;
 }
-.nav-btn:hover { background: var(--soft); }
-.nav-btn.active { background: #fff; border-color: var(--line); font-weight: 600; box-shadow: inset 3px 0 0 var(--magenta); }
-.nav-btn .count {
-  flex: 0 1 auto; font-size: 10.5px; color: var(--muted); background: var(--sand);
-  border-radius: 999px; padding: 1px 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 130px;
+.nav-group .nav-btn { padding-left: 9px; padding-right: 8px; }
+.nav-btn:hover { background: rgba(255, 255, 255, 0.58); }
+.nav-btn.active { background: #fff; border-color: var(--line); box-shadow: inset 3px 0 0 var(--magenta); }
+.nav-title {
+  font-size: 13.5px; line-height: 1.35; font-weight: 500;
+}
+.nav-btn.active .nav-title { font-weight: 700; }
+.nav-source {
+  display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: var(--muted); font-size: 10.5px; line-height: 1.25; opacity: 0.62;
 }
 .hero {
   background: var(--slate); color: #e8eeec; border-radius: 8px;
@@ -191,6 +214,19 @@ main { padding: 26px 30px 60px; min-width: 0; }
   box-shadow: var(--shadow); padding: 16px;
 }
 .classification-card p { margin: 12px 0 0; color: var(--muted); }
+.classification-card small { display: block; margin-top: 10px; color: var(--muted); font-weight: 700; }
+.attachment-card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+  box-shadow: var(--shadow); padding: 18px 20px; margin-top: 14px;
+}
+.attachment-card strong { color: var(--slate); font-size: 16px; }
+.attachment-card p { color: var(--muted); margin: 8px 0 14px; }
+.btn-link {
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 8px; background: var(--sapphire); color: #fff; text-decoration: none;
+  font-weight: 700; padding: 8px 13px;
+}
+.btn-link:hover { background: #2547ad; }
 .classification-modal {
   position: fixed; inset: 0; z-index: 40; display: grid; place-items: center;
   background: rgba(7, 54, 66, 0.58); padding: 24px;
@@ -227,9 +263,16 @@ main { padding: 26px 30px 60px; min-width: 0; }
 .strip-confidential-ayra { background: var(--magenta); }
 .strip-confidential-member { background: var(--sapphire); }
 .strip-confidential-board { background: var(--board-red); }
-.panel-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 6px; }
+.panel-head { display: grid; gap: 5px; margin-bottom: 6px; }
 .panel-head h2 { margin: 0; }
-.panel-head .meta { color: var(--muted); font-size: 12.5px; }
+.source-path {
+  margin: 0; color: var(--muted); font-size: 11.5px; line-height: 1.35;
+  overflow-wrap: anywhere; opacity: 0.66;
+}
+.source-path span {
+  margin-right: 5px; color: var(--slate); font-size: 10px; font-weight: 700;
+  letter-spacing: 0.6px; text-transform: uppercase; opacity: 0.68;
+}
 .doc-summary { color: var(--muted); max-width: 78ch; }
 .doc-body {
   background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
@@ -244,6 +287,10 @@ main { padding: 26px 30px 60px; min-width: 0; }
 .toc a { text-decoration: none; }
 .toc a:hover { text-decoration: underline; }
 .footer-note { margin-top: 40px; color: var(--muted); font-size: 12px; text-align: center; }
+.instructions-shell { padding: 26px 30px 60px; }
+.instructions-body { margin-top: 22px; }
+.instructions-body h2 { margin-top: 1.8em; }
+.instructions-body h3 { margin-top: 1.5em; }
 @media (max-width: 980px) {
   .layout, .layout.no-aside { grid-template-columns: 1fr; }
   aside { position: static; height: auto; max-height: 42vh; border-right: 0; border-bottom: 1px solid var(--line); }
@@ -277,7 +324,7 @@ main { padding: 26px 30px 60px; min-width: 0; }
   <button class="menu-toggle" type="button" aria-label="Open package menu" aria-expanded="false">
     <span class="bars" aria-hidden="true"><span></span><span></span><span></span></span>
   </button>
-  <nav class="tabs"><button class="tab" data-view="start">Start</button><button class="tab" data-view="resolutions">Resolutions</button><button class="tab" data-view="updates">Updates</button><button class="tab" data-view="financials">Financials</button><button class="tab" data-view="references">References</button></nav>
+  <nav class="tabs"><button class="tab" data-view="start">Start</button><button class="tab" data-view="resolutions">Resolutions</button><button class="tab" data-view="updates">Updates</button><button class="tab" data-view="financials">Financials</button><button class="tab" data-view="references">??KILL??-References</button></nav>
 </header>
 <div class="searchbar">
   <div class="searchwrap">
@@ -286,7 +333,7 @@ main { padding: 26px 30px 60px; min-width: 0; }
   </div>
 </div>
 <div class="layout no-search" id="layout">
-  <aside><div class="navpane" id="nav-resolutions" hidden><button class="nav-btn" data-panel="doc-resolutions-01-resolution-index-md"><span>Resolution Index</span><span class="count">resolutions/01-resolution-index.md</span></button><button class="nav-btn" data-panel="doc-resolutions-02-sample-resolution-md"><span>Approve Briefing Package Format</span><span class="count">resolutions/02-sample-resolution.md</span></button><button class="nav-btn" data-panel="doc-resolutions-03-confirm-public-supporting-resolution-md"><span>Confirm Sample Public Supporting Resolution</span><span class="count">resolutions/03-confirm-public-supporting-resolution.md</span></button></div><div class="navpane" id="nav-updates" hidden><button class="nav-btn" data-panel="doc-updates-01-executive-update-md"><span>Executive Update</span><span class="count">updates/01-executive-update.md</span></button><button class="nav-btn" data-panel="doc-updates-02-member-proposal-md"><span>Executive Update</span><span class="count">updates/02-member-proposal.md</span></button></div><div class="navpane" id="nav-financials" hidden><button class="nav-btn" data-panel="doc-financials-00-sample-md"><span>Financials Index</span><span class="count">financials/00-sample.md</span></button></div><div class="navpane" id="nav-references" hidden><button class="nav-btn" data-panel="doc-references-00-sample-md"><span>Key External Material</span><span class="count">references/00-sample.md</span></button><button class="nav-btn" data-panel="doc-references-01-sample-md"><span>TEST</span><span class="count">references/01-sample.md</span></button></div></aside>
+  <aside><div class="navpane" id="nav-resolutions" hidden><button class="nav-btn" data-panel="doc-resolutions-resolutions-01-resolution-index-md"><span class="nav-title">Resolution Index</span><span class="nav-source">resolutions/01-resolution-index.md</span></button><button class="nav-btn" data-panel="doc-resolutions-resolutions-02-sample-resolution-md"><span class="nav-title">Approve Briefing Package Format</span><span class="nav-source">resolutions/02-sample-resolution.md</span></button><button class="nav-btn" data-panel="doc-resolutions-resolutions-03-confirm-public-supporting-resolution-md"><span class="nav-title">Confirm Sample Public Supporting Resolution</span><span class="nav-source">resolutions/03-confirm-public-supporting-resolution.md</span></button></div><div class="navpane" id="nav-updates" hidden><button class="nav-btn" data-panel="doc-updates-updates-01-executive-update-md"><span class="nav-title">Executive Update</span><span class="nav-source">updates/01-executive-update.md</span></button><button class="nav-btn" data-panel="doc-updates-updates-02-member-proposal-md"><span class="nav-title">Executive Update</span><span class="nav-source">updates/02-member-proposal.md</span></button></div><div class="navpane" id="nav-financials" hidden><button class="nav-btn" data-panel="doc-financials-financials-00-sample-md"><span class="nav-title">Financials Index</span><span class="nav-source">financials/00-sample.md</span></button></div><div class="navpane" id="nav-references" hidden><button class="nav-btn" data-panel="doc-references-references-00-sample-md"><span class="nav-title">Key External Material</span><span class="nav-source">references/00-sample.md</span></button><button class="nav-btn" data-panel="doc-references-references-01-sample-md"><span class="nav-title">TEST</span><span class="nav-source">references/01-sample.md</span></button></div></aside>
   <main>
     <div class="shell">
       <section class="viewpane" id="view-start" data-type="overview" hidden>
@@ -299,7 +346,7 @@ main { padding: 26px 30px 60px; min-width: 0; }
   <div class="stats">
     <div class="stat"><strong>4</strong><span>package areas</span></div>
     <div class="stat"><strong>8</strong><span>source documents</span></div>
-    <div class="stat"><strong>2026-07-01</strong><span>generated</span></div>
+    <div class="stat"><strong>2026-07-06</strong><span>generated</span></div>
   </div>
 </section>
 <section class="ov-block">
@@ -309,14 +356,14 @@ main { padding: 26px 30px 60px; min-width: 0; }
 </section>
 <section class="ov-block">
   <h2>Where to find things</h2>
-  <div class="tiles"><button class="tile" data-go="resolutions" data-panel="doc-resolutions-01-resolution-index-md"><strong>Resolutions</strong><span>Decision items, draft resolution language, and supporting notes.</span><small>3 items · Includes CONFIDENTIAL:BOARD, PUBLIC</small></button><button class="tile" data-go="updates" data-panel="doc-updates-01-executive-update-md"><strong>Updates</strong><span>Operating updates and context the Board should read before voting.</span><small>2 items · Includes PUBLIC, CONFIDENTIAL:MEMBER</small></button><button class="tile" data-go="financials" data-panel="doc-financials-00-sample-md"><strong>Financials</strong><span>Board financial reports and analyses.</span><small>1 item · Includes CONFIDENTIAL:BOARD</small></button><button class="tile" data-go="references" data-panel="doc-references-00-sample-md"><strong>References</strong><span>Supporting material, background, and appendices.</span><small>2 items · Includes PUBLIC</small></button></div>
+  <div class="tiles"><button class="tile" data-go="resolutions" data-panel="doc-resolutions-resolutions-01-resolution-index-md"><strong>Resolutions</strong><span>Decision items, draft resolution language, and supporting notes.</span><small>3 items · Includes CONFIDENTIAL:BOARD, PUBLIC</small></button><button class="tile" data-go="updates" data-panel="doc-updates-updates-01-executive-update-md"><strong>Updates</strong><span>Operating updates and context the Board should read before voting.</span><small>2 items · Includes PUBLIC, CONFIDENTIAL:MEMBER</small></button><button class="tile" data-go="financials" data-panel="doc-financials-financials-00-sample-md"><strong>Financials</strong><span>Board financial reports and analyses.</span><small>1 item · Includes CONFIDENTIAL:BOARD</small></button><button class="tile" data-go="references" data-panel="doc-references-references-00-sample-md"><strong>??KILL??-References</strong><span>Supporting material, background, and appendices.</span><small>2 items · Includes PUBLIC</small></button></div>
 </section>
 <section class="ov-block doc-body landing-copy"><p>This example shows the package structure we can use when Ayra needs to send a compact briefing as a single HTML file or web link.</p>
 <h3 id="h-package-shape">Package shape</h3>
 <ul><li><strong>Resolutions</strong> holds the decision material.</li><li><strong>Updates</strong> holds current context and status material.</li><li><strong>Financial Documents</strong> holds current and referenced financial documents.</li><li><strong>References</strong> holds information that may be relevant for the Board, typically external to Ayra.</li><li>The generated landing page explains the browser and builds the &quot;where to find things&quot; cards from the package structure.</li></ul>
 <h3 id="h-authoring-note">Authoring note</h3>
 <p>When assembling a real package, keep the source markdown in the owning knowledge-base folder and run the viewer builder against that folder. The output HTML can sit beside the package or be published as a single web link.</p></section></section><section class="viewpane" id="view-resolutions" data-type="docs" hidden>
-<section class="panel" id="doc-resolutions-01-resolution-index-md" hidden data-search="resolution index resolutions/01-resolution-index.md a maintained table of contents for the resolutions included in the package. confidential:board use this file as the maintained list of resolutions in the package. each row in the table should point to one resolution document in this folder.
+<section class="panel" id="doc-resolutions-resolutions-01-resolution-index-md" hidden data-search="resolution index resolutions/01-resolution-index.md a maintained table of contents for the resolutions included in the package. confidential:board use this file as the maintained list of resolutions in the package. each row in the table should point to one resolution document in this folder.
 
 current resolutions
 
@@ -329,18 +376,21 @@ reading path
 
 1. review this index first.
 2. open each resolution in order.
-3. read the updates, financials, or references sections where a resolution depends on supporting context.">
-  <div class="panel-head"><h2>Resolution Index</h2><span class="meta">resolutions/01-resolution-index.md</span></div>
+3. read the updates, financials, or references sections where a resolution depends on supporting context. markdown">
+  <div class="panel-head">
+    <h2>Resolution Index</h2>
+    <p class="source-path"><span>Source</span> resolutions/01-resolution-index.md</p>
+  </div>
   <div class="classification-strip strip-confidential-board"><div class="classification-strip-label"><span class="classification-badge doc-label label-confidential-board" tabindex="0" role="button" title="Confidential to the Board. Use for material restricted to Board review, deliberation, or decision-making." aria-label="Show classification reference for CONFIDENTIAL:BOARD" data-tooltip="Confidential to the Board. Use for material restricted to Board review, deliberation, or decision-making.">CONFIDENTIAL:BOARD</span></div><p>Confidential to the Board. Use for material restricted to Board review, deliberation, or decision-making.</p></div>
   <p class="doc-summary">A maintained table of contents for the resolutions included in the package.</p>
   
   <div class="doc-body"><p>Use this file as the maintained list of resolutions in the package. Each row in the table should point to one resolution document in this folder.</p>
-<h3 id="h-current-resolutions">Current resolutions</h3>
-<table><thead><tr><th>#</th><th>Resolution</th><th>File</th><th>Status</th><th>Classification</th><th>Owner</th></tr></thead><tbody><tr><td>1</td><td>Approve briefing package format</td><td>02-sample-resolution</td><td>Draft</td><td>CONFIDENTIAL:BOARD</td><td>Board Chair</td></tr><tr><td>2</td><td>Confirm sample public supporting resolution</td><td>03-confirm-public-supporting-resolution</td><td>Example</td><td>PUBLIC</td><td>Governance</td></tr></tbody></table>
-<h3 id="h-reading-path">Reading path</h3>
+<h3 id="doc-resolutions-resolutions-01-resolution-index-md-h-current-resolutions">Current resolutions</h3>
+<table><thead><tr><th>#</th><th>Resolution</th><th>File</th><th>Status</th><th>Classification</th><th>Owner</th></tr></thead><tbody><tr><td>1</td><td>Approve briefing package format</td><td><a href="#resolutions/doc-resolutions-resolutions-02-sample-resolution-md">02-sample-resolution</a></td><td>Draft</td><td>CONFIDENTIAL:BOARD</td><td>Board Chair</td></tr><tr><td>2</td><td>Confirm sample public supporting resolution</td><td><a href="#resolutions/doc-resolutions-resolutions-03-confirm-public-supporting-resolution-md">03-confirm-public-supporting-resolution</a></td><td>Example</td><td>PUBLIC</td><td>Governance</td></tr></tbody></table>
+<h3 id="doc-resolutions-resolutions-01-resolution-index-md-h-reading-path">Reading path</h3>
 <ol><li>Review this index first.</li><li>Open each resolution in order.</li><li>Read the Updates, Financials, or References sections where a resolution depends on supporting context.</li></ol></div>
 </section>
-<section class="panel" id="doc-resolutions-02-sample-resolution-md" hidden data-search="approve briefing package format resolutions/02-sample-resolution.md example board resolution showing the recommended markdown structure for a decision item. confidential:board document control
+<section class="panel" id="doc-resolutions-resolutions-02-sample-resolution-md" hidden data-search="approve briefing package format resolutions/02-sample-resolution.md example board resolution showing the recommended markdown structure for a decision item. confidential:board document control
 
 | field | value |
 | --- | --- |
@@ -369,25 +419,28 @@ supporting materials
 
 notes
 
-replace this example with real resolution language in the owning knowledge-base folder.">
-  <div class="panel-head"><h2>Approve Briefing Package Format</h2><span class="meta">resolutions/02-sample-resolution.md</span></div>
+replace this example with real resolution language in the owning knowledge-base folder. markdown">
+  <div class="panel-head">
+    <h2>Approve Briefing Package Format</h2>
+    <p class="source-path"><span>Source</span> resolutions/02-sample-resolution.md</p>
+  </div>
   <div class="classification-strip strip-confidential-board"><div class="classification-strip-label"><span class="classification-badge doc-label label-confidential-board" tabindex="0" role="button" title="Confidential to the Board. Use for material restricted to Board review, deliberation, or decision-making." aria-label="Show classification reference for CONFIDENTIAL:BOARD" data-tooltip="Confidential to the Board. Use for material restricted to Board review, deliberation, or decision-making.">CONFIDENTIAL:BOARD</span></div><p>Confidential to the Board. Use for material restricted to Board review, deliberation, or decision-making.</p></div>
   <p class="doc-summary">Example Board resolution showing the recommended Markdown structure for a decision item.</p>
-  <nav class="toc"><a href="#h-document-control">Document control</a><a href="#h-proposed-action">Proposed action</a><a href="#h-rationale">Rationale</a><a href="#h-draft-resolution-text">Draft resolution text</a><a href="#h-supporting-materials">Supporting materials</a><a href="#h-notes">Notes</a></nav>
-  <div class="doc-body"><h3 id="h-document-control">Document control</h3>
+  <nav class="toc"><a href="#resolutions/doc-resolutions-resolutions-02-sample-resolution-md/doc-resolutions-resolutions-02-sample-resolution-md-h-document-control">Document control</a><a href="#resolutions/doc-resolutions-resolutions-02-sample-resolution-md/doc-resolutions-resolutions-02-sample-resolution-md-h-proposed-action">Proposed action</a><a href="#resolutions/doc-resolutions-resolutions-02-sample-resolution-md/doc-resolutions-resolutions-02-sample-resolution-md-h-rationale">Rationale</a><a href="#resolutions/doc-resolutions-resolutions-02-sample-resolution-md/doc-resolutions-resolutions-02-sample-resolution-md-h-draft-resolution-text">Draft resolution text</a><a href="#resolutions/doc-resolutions-resolutions-02-sample-resolution-md/doc-resolutions-resolutions-02-sample-resolution-md-h-supporting-materials">Supporting materials</a><a href="#resolutions/doc-resolutions-resolutions-02-sample-resolution-md/doc-resolutions-resolutions-02-sample-resolution-md-h-notes">Notes</a></nav>
+  <div class="doc-body"><h3 id="doc-resolutions-resolutions-02-sample-resolution-md-h-document-control">Document control</h3>
 <table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Resolution ID</td><td>BR-001</td></tr><tr><td>Status</td><td>Draft</td></tr><tr><td>Owner</td><td>Board Chair</td></tr><tr><td>Decision date</td><td><span class="merge">[meeting date]</span></td></tr><tr><td>Classification</td><td>CONFIDENTIAL:BOARD</td></tr></tbody></table>
-<h3 id="h-proposed-action">Proposed action</h3>
+<h3 id="doc-resolutions-resolutions-02-sample-resolution-md-h-proposed-action">Proposed action</h3>
 <p>That the Board approve the package structure for use in upcoming governance briefings.</p>
-<h3 id="h-rationale">Rationale</h3>
+<h3 id="doc-resolutions-resolutions-02-sample-resolution-md-h-rationale">Rationale</h3>
 <p>The package viewer gives Board readers one place to read resolutions, updates, and supporting material without needing access to the source knowledge base.</p>
-<h3 id="h-draft-resolution-text">Draft resolution text</h3>
+<h3 id="doc-resolutions-resolutions-02-sample-resolution-md-h-draft-resolution-text">Draft resolution text</h3>
 <p>Resolved, that the Board authorizes the use of a single-page briefing package viewer for governance materials where a self-contained delivery format is useful.</p>
-<h3 id="h-supporting-materials">Supporting materials</h3>
-<ul><li>../updates/01-executive-update</li><li>../references/00-sample</li></ul>
-<h3 id="h-notes">Notes</h3>
+<h3 id="doc-resolutions-resolutions-02-sample-resolution-md-h-supporting-materials">Supporting materials</h3>
+<ul><li><a href="#updates/doc-updates-updates-01-executive-update-md">01-executive-update</a></li><li><a href="#references/doc-references-references-00-sample-md">00-sample</a></li></ul>
+<h3 id="doc-resolutions-resolutions-02-sample-resolution-md-h-notes">Notes</h3>
 <p>Replace this example with real resolution language in the owning knowledge-base folder.</p></div>
 </section>
-<section class="panel" id="doc-resolutions-03-confirm-public-supporting-resolution-md" hidden data-search="confirm sample public supporting resolution resolutions/03-confirm-public-supporting-resolution.md example resolution showing how a public item can sit inside a board-confidential package. public document control
+<section class="panel" id="doc-resolutions-resolutions-03-confirm-public-supporting-resolution-md" hidden data-search="confirm sample public supporting resolution resolutions/03-confirm-public-supporting-resolution.md example resolution showing how a public item can sit inside a board-confidential package. public document control
 
 | field | value |
 | --- | --- |
@@ -415,25 +468,28 @@ supporting materials
 
 notes
 
-for a real package, delete this example or replace it with an actual public resolution.">
-  <div class="panel-head"><h2>Confirm Sample Public Supporting Resolution</h2><span class="meta">resolutions/03-confirm-public-supporting-resolution.md</span></div>
+for a real package, delete this example or replace it with an actual public resolution. markdown">
+  <div class="panel-head">
+    <h2>Confirm Sample Public Supporting Resolution</h2>
+    <p class="source-path"><span>Source</span> resolutions/03-confirm-public-supporting-resolution.md</p>
+  </div>
   <div class="classification-strip strip-public"><div class="classification-strip-label"><span class="classification-badge doc-label label-public" tabindex="0" role="button" title="Public. Use for material that can be shared outside Ayra without additional restriction." aria-label="Show classification reference for PUBLIC" data-tooltip="Public. Use for material that can be shared outside Ayra without additional restriction.">PUBLIC</span></div><p>Public. Use for material that can be shared outside Ayra without additional restriction.</p></div>
   <p class="doc-summary">Example resolution showing how a public item can sit inside a Board-confidential package.</p>
-  <nav class="toc"><a href="#h-document-control">Document control</a><a href="#h-proposed-action">Proposed action</a><a href="#h-rationale">Rationale</a><a href="#h-draft-resolution-text">Draft resolution text</a><a href="#h-supporting-materials">Supporting materials</a><a href="#h-notes">Notes</a></nav>
-  <div class="doc-body"><h3 id="h-document-control">Document control</h3>
+  <nav class="toc"><a href="#resolutions/doc-resolutions-resolutions-03-confirm-public-supporting-resolution-md/doc-resolutions-resolutions-03-confirm-public-supporting-resolution-md-h-document-control">Document control</a><a href="#resolutions/doc-resolutions-resolutions-03-confirm-public-supporting-resolution-md/doc-resolutions-resolutions-03-confirm-public-supporting-resolution-md-h-proposed-action">Proposed action</a><a href="#resolutions/doc-resolutions-resolutions-03-confirm-public-supporting-resolution-md/doc-resolutions-resolutions-03-confirm-public-supporting-resolution-md-h-rationale">Rationale</a><a href="#resolutions/doc-resolutions-resolutions-03-confirm-public-supporting-resolution-md/doc-resolutions-resolutions-03-confirm-public-supporting-resolution-md-h-draft-resolution-text">Draft resolution text</a><a href="#resolutions/doc-resolutions-resolutions-03-confirm-public-supporting-resolution-md/doc-resolutions-resolutions-03-confirm-public-supporting-resolution-md-h-supporting-materials">Supporting materials</a><a href="#resolutions/doc-resolutions-resolutions-03-confirm-public-supporting-resolution-md/doc-resolutions-resolutions-03-confirm-public-supporting-resolution-md-h-notes">Notes</a></nav>
+  <div class="doc-body"><h3 id="doc-resolutions-resolutions-03-confirm-public-supporting-resolution-md-h-document-control">Document control</h3>
 <table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Resolution ID</td><td>BR-002</td></tr><tr><td>Status</td><td>Example</td></tr><tr><td>Owner</td><td>Governance</td></tr><tr><td>Decision date</td><td><span class="merge">[meeting date]</span></td></tr><tr><td>Classification</td><td>PUBLIC</td></tr></tbody></table>
-<h3 id="h-proposed-action">Proposed action</h3>
+<h3 id="doc-resolutions-resolutions-03-confirm-public-supporting-resolution-md-h-proposed-action">Proposed action</h3>
 <p>That the Board confirm this public example resolution as a demonstration of document-level classification.</p>
-<h3 id="h-rationale">Rationale</h3>
+<h3 id="doc-resolutions-resolutions-03-confirm-public-supporting-resolution-md-h-rationale">Rationale</h3>
 <p>The overall package may be <code>CONFIDENTIAL:BOARD</code>, while an individual resolution or supporting item may be <code>PUBLIC</code>. The viewer will keep the package handling rule on the landing page and show the document's own classification on the detail page.</p>
-<h3 id="h-draft-resolution-text">Draft resolution text</h3>
+<h3 id="doc-resolutions-resolutions-03-confirm-public-supporting-resolution-md-h-draft-resolution-text">Draft resolution text</h3>
 <p>Resolved, that this example public resolution be included to demonstrate how public material can be presented inside a more restricted briefing package.</p>
-<h3 id="h-supporting-materials">Supporting materials</h3>
-<ul><li>../references/00-sample</li></ul>
-<h3 id="h-notes">Notes</h3>
+<h3 id="doc-resolutions-resolutions-03-confirm-public-supporting-resolution-md-h-supporting-materials">Supporting materials</h3>
+<ul><li><a href="#references/doc-references-references-00-sample-md">00-sample</a></li></ul>
+<h3 id="doc-resolutions-resolutions-03-confirm-public-supporting-resolution-md-h-notes">Notes</h3>
 <p>For a real package, delete this example or replace it with an actual public resolution.</p></div>
 </section></section><section class="viewpane" id="view-updates" data-type="docs" hidden>
-<section class="panel" id="doc-updates-01-executive-update-md" hidden data-search="executive update updates/01-executive-update.md a short update format for board readers. public current position
+<section class="panel" id="doc-updates-updates-01-executive-update-md" hidden data-search="executive update updates/01-executive-update.md a short update format for board readers. public current position
 
 the package is designed for short, focused board review. it should make the decision path obvious and keep supporting material close at hand.
 
@@ -446,19 +502,22 @@ what changed
 open items
 
 - replace example material with the real board briefing package.
-- decide where the final html file should be published.">
-  <div class="panel-head"><h2>Executive Update</h2><span class="meta">updates/01-executive-update.md</span></div>
+- decide where the final html file should be published. markdown">
+  <div class="panel-head">
+    <h2>Executive Update</h2>
+    <p class="source-path"><span>Source</span> updates/01-executive-update.md</p>
+  </div>
   <div class="classification-strip strip-public"><div class="classification-strip-label"><span class="classification-badge doc-label label-public" tabindex="0" role="button" title="Public. Use for material that can be shared outside Ayra without additional restriction." aria-label="Show classification reference for PUBLIC" data-tooltip="Public. Use for material that can be shared outside Ayra without additional restriction.">PUBLIC</span></div><p>Public. Use for material that can be shared outside Ayra without additional restriction.</p></div>
   <p class="doc-summary">A short update format for Board readers.</p>
   
-  <div class="doc-body"><h3 id="h-current-position">Current position</h3>
+  <div class="doc-body"><h3 id="doc-updates-updates-01-executive-update-md-h-current-position">Current position</h3>
 <p>The package is designed for short, focused Board review. It should make the decision path obvious and keep supporting material close at hand.</p>
-<h3 id="h-what-changed">What changed</h3>
+<h3 id="doc-updates-updates-01-executive-update-md-h-what-changed">What changed</h3>
 <ul><li>The viewer is now generic rather than tied to the council campaign.</li><li>The confidentiality label is explicit in the page chrome.</li><li>The landing page is generated from the package structure and can be extended with hand-authored markdown.</li></ul>
-<h3 id="h-open-items">Open items</h3>
+<h3 id="doc-updates-updates-01-executive-update-md-h-open-items">Open items</h3>
 <ul><li>Replace example material with the real Board briefing package.</li><li>Decide where the final HTML file should be published.</li></ul></div>
 </section>
-<section class="panel" id="doc-updates-02-member-proposal-md" hidden data-search="executive update updates/02-member-proposal.md a short update format for board readers. confidential:member current position
+<section class="panel" id="doc-updates-updates-02-member-proposal-md" hidden data-search="executive update updates/02-member-proposal.md a short update format for board readers. confidential:member current position
 
 the package is designed for short, focused board review. it should make the decision path obvious and keep supporting material close at hand.
 
@@ -471,40 +530,52 @@ what changed
 open items
 
 - replace example material with the real board briefing package.
-- decide where the final html file should be published.">
-  <div class="panel-head"><h2>Executive Update</h2><span class="meta">updates/02-member-proposal.md</span></div>
+- decide where the final html file should be published. markdown">
+  <div class="panel-head">
+    <h2>Executive Update</h2>
+    <p class="source-path"><span>Source</span> updates/02-member-proposal.md</p>
+  </div>
   <div class="classification-strip strip-confidential-member"><div class="classification-strip-label"><span class="classification-badge doc-label label-confidential-member" tabindex="0" role="button" title="Confidential member-related material. Use when the material identifies, assesses, or depends on a particular member relationship." aria-label="Show classification reference for CONFIDENTIAL:MEMBER" data-tooltip="Confidential member-related material. Use when the material identifies, assesses, or depends on a particular member relationship.">CONFIDENTIAL:MEMBER</span></div><p>Confidential member-related material. Use when the material identifies, assesses, or depends on a particular member relationship.</p></div>
   <p class="doc-summary">A short update format for Board readers.</p>
   
-  <div class="doc-body"><h3 id="h-current-position">Current position</h3>
+  <div class="doc-body"><h3 id="doc-updates-updates-02-member-proposal-md-h-current-position">Current position</h3>
 <p>The package is designed for short, focused Board review. It should make the decision path obvious and keep supporting material close at hand.</p>
-<h3 id="h-what-changed">What changed</h3>
+<h3 id="doc-updates-updates-02-member-proposal-md-h-what-changed">What changed</h3>
 <ul><li>The viewer is now generic rather than tied to the council campaign.</li><li>The confidentiality label is explicit in the page chrome.</li><li>The landing page is generated from the package structure and can be extended with hand-authored markdown.</li></ul>
-<h3 id="h-open-items">Open items</h3>
+<h3 id="doc-updates-updates-02-member-proposal-md-h-open-items">Open items</h3>
 <ul><li>Replace example material with the real Board briefing package.</li><li>Decide where the final HTML file should be published.</li></ul></div>
 </section></section><section class="viewpane" id="view-financials" data-type="docs" hidden>
-<section class="panel" id="doc-financials-00-sample-md" hidden data-search="financials index financials/00-sample.md a board-facing index of the financial statements. confidential:board ">
-  <div class="panel-head"><h2>Financials Index</h2><span class="meta">financials/00-sample.md</span></div>
+<section class="panel" id="doc-financials-financials-00-sample-md" hidden data-search="financials index financials/00-sample.md a board-facing index of the financial statements. confidential:board  markdown">
+  <div class="panel-head">
+    <h2>Financials Index</h2>
+    <p class="source-path"><span>Source</span> financials/00-sample.md</p>
+  </div>
   <div class="classification-strip strip-confidential-board"><div class="classification-strip-label"><span class="classification-badge doc-label label-confidential-board" tabindex="0" role="button" title="Confidential to the Board. Use for material restricted to Board review, deliberation, or decision-making." aria-label="Show classification reference for CONFIDENTIAL:BOARD" data-tooltip="Confidential to the Board. Use for material restricted to Board review, deliberation, or decision-making.">CONFIDENTIAL:BOARD</span></div><p>Confidential to the Board. Use for material restricted to Board review, deliberation, or decision-making.</p></div>
   <p class="doc-summary">A board-facing index of the financial statements.</p>
   
   <div class="doc-body"></div>
 </section></section><section class="viewpane" id="view-references" data-type="docs" hidden>
-<section class="panel" id="doc-references-00-sample-md" hidden data-search="key external material references/00-sample.md a list of externam material that may be helpful for the board. public ">
-  <div class="panel-head"><h2>Key External Material</h2><span class="meta">references/00-sample.md</span></div>
+<section class="panel" id="doc-references-references-00-sample-md" hidden data-search="key external material references/00-sample.md a list of externam material that may be helpful for the board. public  markdown">
+  <div class="panel-head">
+    <h2>Key External Material</h2>
+    <p class="source-path"><span>Source</span> references/00-sample.md</p>
+  </div>
   <div class="classification-strip strip-public"><div class="classification-strip-label"><span class="classification-badge doc-label label-public" tabindex="0" role="button" title="Public. Use for material that can be shared outside Ayra without additional restriction." aria-label="Show classification reference for PUBLIC" data-tooltip="Public. Use for material that can be shared outside Ayra without additional restriction.">PUBLIC</span></div><p>Public. Use for material that can be shared outside Ayra without additional restriction.</p></div>
   <p class="doc-summary">A list of externam material that may be helpful for the board.</p>
   
   <div class="doc-body"></div>
 </section>
-<section class="panel" id="doc-references-01-sample-md" hidden data-search="test references/01-sample.md just a test. public ">
-  <div class="panel-head"><h2>TEST</h2><span class="meta">references/01-sample.md</span></div>
+<section class="panel" id="doc-references-references-01-sample-md" hidden data-search="test references/01-sample.md just a test. public  markdown">
+  <div class="panel-head">
+    <h2>TEST</h2>
+    <p class="source-path"><span>Source</span> references/01-sample.md</p>
+  </div>
   <div class="classification-strip strip-public"><div class="classification-strip-label"><span class="classification-badge doc-label label-public" tabindex="0" role="button" title="Public. Use for material that can be shared outside Ayra without additional restriction." aria-label="Show classification reference for PUBLIC" data-tooltip="Public. Use for material that can be shared outside Ayra without additional restriction.">PUBLIC</span></div><p>Public. Use for material that can be shared outside Ayra without additional restriction.</p></div>
   <p class="doc-summary">just a test.</p>
   
   <div class="doc-body"></div>
 </section></section>
-      <p class="footer-note">Generated 2026-07-01 from markdown sources in this package using Ayra Briefing Package Viewer.</p>
+      <p class="footer-note">Generated 2026-07-06 from markdown sources in this package using Ayra Briefing Package Viewer · <a href="build-instructions.html">Build instructions</a></p>
     </div>
   </main>
 </div>
@@ -528,22 +599,27 @@ open items
 <article class="classification-card">
   <div><span class="classification-badge label label-public" tabindex="0" role="button" title="Public. Use for material that can be shared outside Ayra without additional restriction." aria-label="Show classification reference for PUBLIC" data-tooltip="Public. Use for material that can be shared outside Ayra without additional restriction.">PUBLIC</span></div>
   <p>Public. Use for material that can be shared outside Ayra without additional restriction.</p>
+  <small>Sensitivity value: 0.0</small>
 </article>
 <article class="classification-card">
-  <div><span class="classification-badge label label-confidential-staff" tabindex="0" role="button" title="Confidential to Ayra staff. Use for operational material intended for Ayra staff, not members or public audiences." aria-label="Show classification reference for CONFIDENTIAL:STAFF" data-tooltip="Confidential to Ayra staff. Use for operational material intended for Ayra staff, not members or public audiences.">CONFIDENTIAL:STAFF</span></div>
-  <p>Confidential to Ayra staff. Use for operational material intended for Ayra staff, not members or public audiences.</p>
-</article>
-<article class="classification-card">
-  <div><span class="classification-badge label label-confidential-ayra" tabindex="0" role="button" title="Confidential to Ayra staff and members. Use for member-accessible Ayra material that should not be public." aria-label="Show classification reference for CONFIDENTIAL:AYRA" data-tooltip="Confidential to Ayra staff and members. Use for member-accessible Ayra material that should not be public.">CONFIDENTIAL:AYRA</span></div>
-  <p>Confidential to Ayra staff and members. Use for member-accessible Ayra material that should not be public.</p>
+  <div><span class="classification-badge label label-confidential-ayra" tabindex="0" role="button" title="Confidential to all Ayra Members and Ayra Staff. Use for member-accessible Ayra material that should not be public." aria-label="Show classification reference for CONFIDENTIAL:AYRA" data-tooltip="Confidential to all Ayra Members and Ayra Staff. Use for member-accessible Ayra material that should not be public.">CONFIDENTIAL:AYRA</span></div>
+  <p>Confidential to all Ayra Members and Ayra Staff. Use for member-accessible Ayra material that should not be public.</p>
+  <small>Sensitivity value: 1.1</small>
 </article>
 <article class="classification-card">
   <div><span class="classification-badge label label-confidential-member" tabindex="0" role="button" title="Confidential member-related material. Use when the material identifies, assesses, or depends on a particular member relationship." aria-label="Show classification reference for CONFIDENTIAL:MEMBER" data-tooltip="Confidential member-related material. Use when the material identifies, assesses, or depends on a particular member relationship.">CONFIDENTIAL:MEMBER</span></div>
   <p>Confidential member-related material. Use when the material identifies, assesses, or depends on a particular member relationship.</p>
+  <small>Sensitivity value: 1.2</small>
+</article>
+<article class="classification-card">
+  <div><span class="classification-badge label label-confidential-staff" tabindex="0" role="button" title="Confidential to Ayra staff. Use for operational material intended for Ayra staff, not members or public audiences." aria-label="Show classification reference for CONFIDENTIAL:STAFF" data-tooltip="Confidential to Ayra staff. Use for operational material intended for Ayra staff, not members or public audiences.">CONFIDENTIAL:STAFF</span></div>
+  <p>Confidential to Ayra staff. Use for operational material intended for Ayra staff, not members or public audiences.</p>
+  <small>Sensitivity value: 1.3</small>
 </article>
 <article class="classification-card">
   <div><span class="classification-badge label label-confidential-board" tabindex="0" role="button" title="Confidential to the Board. Use for material restricted to Board review, deliberation, or decision-making." aria-label="Show classification reference for CONFIDENTIAL:BOARD" data-tooltip="Confidential to the Board. Use for material restricted to Board review, deliberation, or decision-making.">CONFIDENTIAL:BOARD</span></div>
   <p>Confidential to the Board. Use for material restricted to Board review, deliberation, or decision-making.</p>
+  <small>Sensitivity value: 1.4</small>
 </article>
 </section>
   </div>
@@ -596,6 +672,26 @@ function syncHash() {
   history.replaceState(null, "", "#" + state.view + (hasNav && panel ? "/" + panel : ""));
 }
 
+function scrollToAnchor(anchor) {
+  if (!anchor) return;
+  requestAnimationFrame(() => {
+    const target = document.getElementById(anchor);
+    if (target) target.scrollIntoView({ block: "start" });
+  });
+}
+
+function openRoute(view, panel, anchor, replaceHash) {
+  if (!view || !document.getElementById("view-" + view)) return false;
+  state.panel[view] = panel || state.panel[view];
+  setView(view, true);
+  if (panel && document.getElementById(panel)) setPanel(panel, true);
+  if (replaceHash) {
+    history.replaceState(null, "", "#" + view + (panel ? "/" + panel : "") + (anchor ? "/" + anchor : ""));
+  }
+  scrollToAnchor(anchor);
+  return true;
+}
+
 function applySearch() {
   const q = $("#search").value.trim().toLowerCase();
   $("#search-count").textContent = "";
@@ -635,6 +731,15 @@ document.addEventListener("click", (event) => {
   }
   const tab = event.target.closest(".tab");
   if (tab) return setView(tab.dataset.view);
+  const tocLink = event.target.closest(".toc a");
+  if (tocLink) {
+    const hash = tocLink.getAttribute("href") || "";
+    const [view, panel, anchor] = hash.replace(/^#/, "").split("/");
+    if (openRoute(view, panel, anchor, true)) {
+      event.preventDefault();
+      return;
+    }
+  }
   const navButton = event.target.closest(".nav-btn");
   if (navButton) { setPanel(navButton.dataset.panel); window.scrollTo(0, 0); return; }
   const tile = event.target.closest("[data-go]");
@@ -685,14 +790,19 @@ function updateStickyOffset() {
   document.documentElement.style.setProperty("--sticky-offset", (topHeight + searchHeight + 10) + "px");
 }
 
-(function init() {
+function navigateFromHash(skipHash) {
   const hash = location.hash.replace(/^#/, "");
-  const [view, panel] = hash.split("/");
-  if (view && document.getElementById("view-" + view)) {
-    if (panel && document.getElementById(panel)) state.panel[view] = panel;
-    return setView(view, true);
+  const [view, panel, anchor] = hash.split("/");
+  if (openRoute(view, panel, anchor, false)) {
+    return;
   }
-  setView("start", true);
+  setView("start", skipHash);
+}
+
+window.addEventListener("hashchange", () => navigateFromHash(false));
+
+(function init() {
+  navigateFromHash(true);
 })();
 </script>
 </body>

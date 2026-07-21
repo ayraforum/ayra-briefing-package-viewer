@@ -1,0 +1,32 @@
+[
+  {
+    "label": "PUBLIC",
+    "visible_label": "PUBLIC",
+    "description": "Public. Use for material that can be shared outside Ayra without additional restriction.",
+    "value": 0
+  },
+  {
+    "label": "CONFIDENTIAL:STAFF",
+    "visible_label": "CONFIDENTIAL:STAFF",
+    "description": "Confidential to Ayra staff. Use for operational material intended for Ayra staff, not members or public audiences.",
+    "value": 1.3
+  },
+  {
+    "label": "CONFIDENTIAL:AYRA",
+    "visible_label": "CONFIDENTIAL:AYRA",
+    "description": "Confidential to all Ayra Members and Ayra Staff. Use for member-accessible Ayra material that should not be public.",
+    "value": 1.1
+  },
+  {
+    "label": "CONFIDENTIAL:MEMBER",
+    "visible_label": "CONFIDENTIAL:MEMBER",
+    "description": "Confidential member-related material. Use when the material identifies, assesses, or depends on a particular member relationship.",
+    "value": 1.2
+  },
+  {
+    "label": "CONFIDENTIAL:BOARD",
+    "visible_label": "CONFIDENTIAL:BOARD",
+    "description": "Confidential to the Board. Use for material restricted to Board review, deliberation, or decision-making.",
+    "value": 1.4
+  }
+]

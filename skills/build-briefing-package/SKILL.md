@@ -11,7 +11,7 @@ Use this skill when the user asks to turn loose Markdown files into a self-conta
 
 1. Locate the source Markdown files and confirm the package audience, purpose, and highest package classification.
 2. Create or choose a package folder in the owning repo. Do not move confidential material across repo or audience boundaries without explicit approval.
-3. Organize source files into top-level section folders such as `resolutions/`, `updates/`, `financials/`, `references/`, `nominees/`, or `process/`.
+3. Organize source files into top-level section folders such as `resolutions/`, `updates/`, `financials/`, `references/`, `nominees/`, or `process/`. If one section has internal hierarchy, such as Key Material following agenda topics, configure that section with `groups` so the generated navigation preserves the context. If the source of truth already lives elsewhere in the same repo, such as formal resolution drafts, configure the section's `documents` list with external `source` paths instead of copying the files into the package.
 4. Add frontmatter to each document:
    - `title`
    - `summary`
@@ -23,7 +23,7 @@ Use this skill when the user asks to turn loose Markdown files into a self-conta
 8. Build the package:
 
 ```bash
-python3 -B -m ayra_package_viewer path/to/package-folder
+ayra-package-viewer path/to/package-folder
 ```
 
 9. Verify the generated HTML includes the expected sections, document count, classification strips, and start page.
@@ -40,6 +40,8 @@ Use only these canonical values:
 
 The package label is the handling rule for the delivered package. Individual documents may be less restricted or differently restricted. Example: a `CONFIDENTIAL:BOARD` package may contain a `PUBLIC` reference document.
 
+Classification levels are configured in `ayra_package_viewer/classification-levels.json`. Higher numeric values mean more confidential and control priority when an item carries multiple labels.
+
 ## When To Read References
 
 Read [references/markdown-patterns.md](references/markdown-patterns.md) when you need copy-paste Markdown patterns for `package-viewer.json`, start pages, ordinary documents, resolution indexes, or resolution documents.
@@ -53,7 +55,8 @@ Use the root viewer repo templates when creating real resolution files:
 
 - Keep authoring instructions out of delivered package content unless the package itself is instructional.
 - Use package examples to demonstrate outputs, not as the only place instructions live.
+- Treat financial statements and other PDFs as linked attachments; do not embed PDF contents in the generated HTML.
+- Do not duplicate canonical governance records solely for package display. Use configured external `source` documents when the package should render the canonical file.
 - Do not expose one member's confidential information in another member's context.
 - For Ayra packages, preserve the distinction between package-level classification and document-level classification.
 - After editing source Markdown or config, always rebuild the HTML and report the generated file.
-

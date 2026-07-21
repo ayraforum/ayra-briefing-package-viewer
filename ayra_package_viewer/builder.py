@@ -13,10 +13,16 @@ import json
 import re
 from dataclasses import dataclass
 from datetime import date
+from importlib import resources
 from pathlib import Path
 from typing import Any
 
 CONFIG_NAME = "package-viewer.json"
+CLASSIFICATION_CONFIG = Path(__file__).with_name("classification-levels.json")
+REPO_ROOT = Path(__file__).resolve().parent.parent
+AUTHORING_SOURCE = REPO_ROOT / "AUTHORING.md"
+MARKDOWN_PATTERNS_SOURCE = REPO_ROOT / "skills/build-briefing-package/references/markdown-patterns.md"
+BUILD_INSTRUCTIONS_NAME = "build-instructions.html"
 LANDING_CANDIDATES = (
     "00-start-here.md",
     "start-here.md",
@@ -24,22 +30,6 @@ LANDING_CANDIDATES = (
     "index.md",
     "README.md",
 )
-
-ALLOWED_LABELS = {
-    "PUBLIC": "Public. Use for material that can be shared outside Ayra without additional restriction.",
-    "CONFIDENTIAL:STAFF": "Confidential to Ayra staff. Use for operational material intended for Ayra staff, not members or public audiences.",
-    "CONFIDENTIAL:AYRA": "Confidential to Ayra staff and members. Use for member-accessible Ayra material that should not be public.",
-    "CONFIDENTIAL:MEMBER": "Confidential member-related material. Use when the material identifies, assesses, or depends on a particular member relationship.",
-    "CONFIDENTIAL:BOARD": "Confidential to the Board. Use for material restricted to Board review, deliberation, or decision-making.",
-}
-
-LABEL_PRIORITY = {
-    "PUBLIC": 0,
-    "CONFIDENTIAL:STAFF": 1,
-    "CONFIDENTIAL:AYRA": 2,
-    "CONFIDENTIAL:MEMBER": 3,
-    "CONFIDENTIAL:BOARD": 4,
-}
 
 LABEL_ALIASES = {
     "AYRA INTERNAL": "CONFIDENTIAL:STAFF",
@@ -50,12 +40,32 @@ LABEL_ALIASES = {
     "BOARD CONFIDENTIAL": "CONFIDENTIAL:BOARD",
 }
 
+
+def load_classification_levels() -> dict[str, dict[str, Any]]:
+    raw = json.loads(CLASSIFICATION_CONFIG.read_text(encoding="utf-8"))
+    levels: dict[str, dict[str, Any]] = {}
+    for item in raw:
+        label = str(item["label"]).strip().upper()
+        levels[label] = {
+            "visible_label": str(item.get("visible_label") or label),
+            "description": str(item["description"]),
+            "value": float(item["value"]),
+        }
+    if "PUBLIC" not in levels:
+        raise ValueError("classification-levels.json must define PUBLIC")
+    return dict(sorted(levels.items(), key=lambda pair: pair[1]["value"]))
+
+
+CLASSIFICATION_LEVELS = load_classification_levels()
+
 PLACEHOLDER_WORDS = re.compile(
     r"name|link|date|phase|deadline|status|bracket|sender|owner|class|council|member",
     re.I,
 )
 LIST_LINE = re.compile(r"^(\s*)([-*]|\d+\.)\s+(.*)$")
 HEADING_LINE = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
+FENCE_LINE = re.compile(r"^(`{3,})(.*)$")
+PACKAGE_FILE_SUFFIXES = {".md", ".pdf"}
 
 
 @dataclass
@@ -67,6 +77,25 @@ class Document:
     summary: str
     labels: list[str]
     order: int
+    kind: str = "markdown"
+
+
+@dataclass
+class DocumentSource:
+    path: Path
+    rel_path: str
+    title: str | None = None
+    summary: str | None = None
+    labels: list[str] | None = None
+    order: int | None = None
+
+
+@dataclass
+class DocumentGroup:
+    id: str
+    title: str
+    description: str
+    documents: list[Document]
 
 
 @dataclass
@@ -75,6 +104,7 @@ class Section:
     title: str
     description: str
     documents: list[Document]
+    groups: list[DocumentGroup] | None = None
 
 
 @dataclass
@@ -85,6 +115,7 @@ class Package:
     labels: list[str]
     audience: str
     output: Path
+    instructions_output: Path
     landing_md: str
     landing_intro: str
     sections: list[Section]
@@ -105,6 +136,38 @@ def slug(text: str, fallback: str = "item") -> str:
     return value or fallback
 
 
+WIKILINK_INDEX: dict[str, str] = {}
+
+
+def register_wikilinks(package: "Package") -> None:
+    """Map document paths (and bare filenames) to in-viewer anchors so wikilinks resolve."""
+    WIKILINK_INDEX.clear()
+    ambiguous: set[str] = set()
+    for section in package.sections:
+        for doc in section.documents:
+            href = f"#{section.id}/{doc.id}"
+            stem = re.sub(r"\.(md|pdf)$", "", doc.rel_path, flags=re.IGNORECASE).lower()
+            WIKILINK_INDEX.setdefault(stem, href)
+            base = stem.split("/")[-1]
+            if base in WIKILINK_INDEX and WIKILINK_INDEX[base] != href:
+                ambiguous.add(base)
+            else:
+                WIKILINK_INDEX.setdefault(base, href)
+    for base in ambiguous:
+        WIKILINK_INDEX.pop(base, None)
+
+
+def resolve_wikilink(target: str) -> str | None:
+    cleaned = target.strip().split("#", 1)[0]
+    cleaned = re.sub(r"\.md$", "", cleaned, flags=re.IGNORECASE)
+    while cleaned.startswith("../"):
+        cleaned = cleaned[3:]
+    cleaned = cleaned.lstrip("./").lower()
+    if not cleaned:
+        return None
+    return WIKILINK_INDEX.get(cleaned) or WIKILINK_INDEX.get(cleaned.split("/")[-1])
+
+
 def inline(text: str, highlight: bool = True) -> str:
     out = esc(text)
     stash: list[str] = []
@@ -122,8 +185,17 @@ def inline(text: str, highlight: bool = True) -> str:
         out,
     )
     out = re.sub(r"!\[\[([^\]]+)\]\]", r"<em>See: \1</em>", out)
-    out = re.sub(r"\[\[([^\]|]+)\|([^\]]+)\]\]", r"\2", out)
-    out = re.sub(r"\[\[([^\]]+)\]\]", r"\1", out)
+
+    def wikilink(match: re.Match) -> str:
+        target = match.group(1)
+        label = match.group(2) if match.lastindex and match.lastindex >= 2 and match.group(2) else target.split("/")[-1]
+        href = resolve_wikilink(target)
+        if href:
+            return keep(f'<a href="{href}">{label}</a>')
+        return label
+
+    out = re.sub(r"\[\[([^\]|]+)\|([^\]]+)\]\]", wikilink, out)
+    out = re.sub(r"\[\[([^\]]+)\]\]", wikilink, out)
     out = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r'<a href="\2">\1</a>', out)
     if highlight:
         out = re.sub(
@@ -188,11 +260,12 @@ def split_table_row(line: str) -> list[str]:
     return [cell.strip() for cell in line.strip().strip("|").split("|")]
 
 
-def heading_anchor(text: str) -> str:
-    return "h-" + slug(re.sub(r"\*+", "", text), "heading")
+def heading_anchor(text: str, prefix: str = "") -> str:
+    base = "h-" + slug(re.sub(r"\*+", "", text), "heading")
+    return f"{slug(prefix, 'doc')}-{base}" if prefix else base
 
 
-def render_markdown(markdown: str, highlight: bool = True) -> str:
+def render_markdown(markdown: str, highlight: bool = True, anchor_prefix: str = "") -> str:
     lines = markdown.replace("\r\n", "\n").split("\n")
     html: list[str] = []
     i = 0
@@ -202,13 +275,17 @@ def render_markdown(markdown: str, highlight: bool = True) -> str:
             i += 1
             continue
 
-        if line.startswith("```"):
+        fence = FENCE_LINE.match(line)
+        if fence:
+            fence_len = len(fence.group(1))
+            closing_fence = re.compile(rf"^`{{{fence_len},}}\s*$")
             code: list[str] = []
             i += 1
-            while i < len(lines) and not lines[i].startswith("```"):
+            while i < len(lines) and not closing_fence.match(lines[i]):
                 code.append(lines[i])
                 i += 1
-            i += 1
+            if i < len(lines):
+                i += 1
             html.append("<pre><code>" + esc("\n".join(code)) + "</code></pre>")
             continue
 
@@ -217,7 +294,7 @@ def render_markdown(markdown: str, highlight: bool = True) -> str:
             level = min(6, len(heading.group(1)) + 1)
             text = heading.group(2)
             html.append(
-                f'<h{level} id="{heading_anchor(text)}">{inline(text, highlight)}</h{level}>'
+                f'<h{level} id="{heading_anchor(text, anchor_prefix)}">{inline(text, highlight)}</h{level}>'
             )
             i += 1
             continue
@@ -268,7 +345,7 @@ def render_markdown(markdown: str, highlight: bool = True) -> str:
             i < len(lines)
             and lines[i].strip()
             and not HEADING_LINE.match(lines[i])
-            and not lines[i].startswith("```")
+            and not FENCE_LINE.match(lines[i])
             and not LIST_LINE.match(lines[i])
             and not re.match(r"^\s*>\s?", lines[i])
             and not ("|" in lines[i] and i + 1 < len(lines) and is_table_separator(lines[i + 1]))
@@ -354,8 +431,8 @@ def read_json(path: Path) -> dict[str, Any]:
 def normalize_label(label: str) -> str:
     normalized = re.sub(r"\s+", " ", label.strip()).upper()
     normalized = LABEL_ALIASES.get(normalized, normalized)
-    if normalized not in ALLOWED_LABELS:
-        allowed = ", ".join(ALLOWED_LABELS)
+    if normalized not in CLASSIFICATION_LEVELS:
+        allowed = ", ".join(CLASSIFICATION_LEVELS)
         raise ValueError(f"Unknown label '{label}'. Use one of: {allowed}")
     return normalized
 
@@ -381,18 +458,50 @@ def rel(root: Path, path: Path) -> str:
     return path.relative_to(root).as_posix()
 
 
-def load_document(root: Path, path: Path) -> Document:
+def path_rel_or_display(root: Path, path: Path) -> str:
+    try:
+        return rel(root, path)
+    except ValueError:
+        return path.as_posix()
+
+
+def config_labels(raw: Any) -> list[str] | None:
+    if raw is None:
+        return None
+    if isinstance(raw, str):
+        raw = [raw]
+    return [normalize_label(str(label)) for label in raw]
+
+
+def load_document(root: Path, source: DocumentSource | Path) -> Document:
+    if isinstance(source, Path):
+        source = DocumentSource(path=source, rel_path=path_rel_or_display(root, source))
+
+    path = source.path
+    if path.suffix.lower() == ".pdf":
+        title = source.title or re.sub(r"^\d+[-_\s]*", "", path.stem).replace("-", " ").replace("_", " ").title()
+        return Document(
+            id="doc-" + slug(source.rel_path, "doc"),
+            title=title,
+            rel_path=source.rel_path,
+            body_md="",
+            summary=source.summary or "PDF attachment. Open the file separately; it is referenced by this package but not embedded into the HTML.",
+            labels=source.labels or [],
+            order=source.order if source.order is not None else doc_order({}, path),
+            kind="pdf",
+        )
+
     frontmatter, body = strip_frontmatter(path.read_text(encoding="utf-8"))
-    title = doc_title(frontmatter, body, path)
+    title = source.title or doc_title(frontmatter, body, path)
     body_without_h1 = re.sub(r"^#\s+.+\n", "", body, count=1)
     return Document(
-        id="doc-" + slug(rel(root, path), "doc"),
+        id="doc-" + slug(source.rel_path, "doc"),
         title=title,
-        rel_path=rel(root, path),
+        rel_path=source.rel_path,
         body_md=body_without_h1,
-        summary=str(frontmatter.get("summary") or first_paragraph(body)),
-        labels=frontmatter_labels(frontmatter),
-        order=doc_order(frontmatter, path),
+        summary=str(source.summary or frontmatter.get("summary") or first_paragraph(body)),
+        labels=source.labels if source.labels is not None else frontmatter_labels(frontmatter),
+        order=source.order if source.order is not None else doc_order(frontmatter, path),
     )
 
 
@@ -411,24 +520,104 @@ def discover_landing(root: Path, config: dict[str, Any]) -> tuple[Path | None, s
     return None, ""
 
 
-def configured_documents(root: Path, section_path: Path, docs: list[str] | None) -> list[Path]:
-    if not docs:
-        return sorted(
-            (
-                path
-                for path in section_path.rglob("*.md")
-                if path.is_file() and not is_hidden(path.relative_to(root))
-            ),
-            key=lambda p: p.as_posix().lower(),
-        )
-    paths = []
-    for item in docs:
+def resolve_configured_document(root: Path, section_path: Path, item: Any) -> DocumentSource | None:
+    if isinstance(item, str):
         path = root / item
         if not path.exists():
             path = section_path / item
-        if path.exists() and path.suffix.lower() == ".md":
-            paths.append(path)
-    return paths
+        if path.exists() and path.suffix.lower() in PACKAGE_FILE_SUFFIXES:
+            return DocumentSource(path=path, rel_path=path_rel_or_display(root, path))
+        return None
+
+    if not isinstance(item, dict):
+        return None
+
+    raw_source = item.get("source") or item.get("file") or item.get("path")
+    if not raw_source:
+        return None
+
+    source_path = Path(str(raw_source))
+    candidates = [source_path] if source_path.is_absolute() else [root / source_path, section_path / source_path]
+    path = next((candidate.resolve() for candidate in candidates if candidate.exists()), None)
+    if not path or path.suffix.lower() not in PACKAGE_FILE_SUFFIXES:
+        return None
+
+    rel_path = str(
+        item.get("display_path")
+        or item.get("package_path")
+        or item.get("rel_path")
+        or raw_source
+    )
+    return DocumentSource(
+        path=path,
+        rel_path=rel_path,
+        title=str(item["title"]) if item.get("title") is not None else None,
+        summary=str(item["summary"]) if item.get("summary") is not None else None,
+        labels=config_labels(item.get("labels") or item.get("label") or item.get("confidentiality") or item.get("classification")),
+        order=int(item["order"]) if item.get("order") is not None else None,
+    )
+
+
+def configured_documents(root: Path, section_path: Path, docs: list[Any] | None) -> list[DocumentSource]:
+    if not docs:
+        return sorted(
+            (
+                DocumentSource(path=path, rel_path=rel(root, path))
+                for path in section_path.rglob("*")
+                if path.is_file()
+                and path.suffix.lower() in PACKAGE_FILE_SUFFIXES
+                and not is_hidden(path.relative_to(root))
+            ),
+            key=lambda source: source.path.as_posix().lower(),
+        )
+    sources = []
+    for item in docs:
+        source = resolve_configured_document(root, section_path, item)
+        if source:
+            sources.append(source)
+    return sources
+
+
+def load_configured_documents(root: Path, sources: list[DocumentSource], excluded: set[str]) -> list[Document]:
+    documents = [load_document(root, source) for source in sources if source.rel_path not in excluded]
+    documents.sort(key=lambda doc: (doc.order, doc.title.lower()))
+    return documents
+
+
+def assign_section_document_ids(section: Section) -> None:
+    seen: dict[str, int] = {}
+    for doc in section.documents:
+        base = slug(f"{section.id}-{doc.rel_path}", "doc")
+        seen[base] = seen.get(base, 0) + 1
+        suffix = f"-{seen[base]}" if seen[base] > 1 else ""
+        doc.id = f"doc-{base}{suffix}"
+
+
+def load_configured_groups(root: Path, section_path: Path, raw_groups: Any, excluded: set[str]) -> tuple[list[Document], list[DocumentGroup]]:
+    documents: list[Document] = []
+    groups: list[DocumentGroup] = []
+    if not isinstance(raw_groups, list):
+        return documents, groups
+
+    for raw in raw_groups:
+        if not isinstance(raw, dict):
+            continue
+        group_id = slug(str(raw.get("id") or raw.get("title") or "group"), "group")
+        group_path = root / str(raw.get("path")) if raw.get("path") else section_path
+        sources = configured_documents(root, group_path, raw.get("documents"))
+        group_docs = load_configured_documents(root, sources, excluded)
+        if not group_docs:
+            continue
+        documents.extend(group_docs)
+        groups.append(
+            DocumentGroup(
+                id=group_id,
+                title=str(raw.get("title") or group_id.replace("-", " ").title()),
+                description=str(raw.get("description") or ""),
+                documents=group_docs,
+            )
+        )
+    return documents, groups
 
 
 def load_sections(root: Path, config: dict[str, Any], landing_path: Path | None) -> list[Section]:
@@ -446,22 +635,22 @@ def load_sections(root: Path, config: dict[str, Any], landing_path: Path | None)
             section_path = root / str(raw.get("path") or section_id)
             if section_path.exists():
                 configured_paths.add(rel(root, section_path))
-            doc_paths = configured_documents(root, section_path, raw.get("documents"))
-            documents = [
-                load_document(root, path)
-                for path in doc_paths
-                if rel(root, path) not in excluded
-            ]
-            documents.sort(key=lambda doc: (doc.order, doc.title.lower()))
+            if raw.get("groups"):
+                documents, groups = load_configured_groups(root, section_path, raw.get("groups"), excluded)
+            else:
+                doc_paths = configured_documents(root, section_path, raw.get("documents"))
+                documents = load_configured_documents(root, doc_paths, excluded)
+                groups = []
             if documents:
-                sections.append(
-                    Section(
-                        id=section_id,
-                        title=str(raw.get("title") or section_id.replace("-", " ").title()),
-                        description=str(raw.get("description") or ""),
-                        documents=documents,
-                    )
+                section = Section(
+                    id=section_id,
+                    title=str(raw.get("title") or section_id.replace("-", " ").title()),
+                    description=str(raw.get("description") or ""),
+                    documents=documents,
+                    groups=groups or None,
                 )
+                assign_section_document_ids(section)
+                sections.append(section)
         if config.get("auto_discover_sections") is False:
             return sections
 
@@ -469,26 +658,28 @@ def load_sections(root: Path, config: dict[str, Any], landing_path: Path | None)
         if rel(root, directory) in configured_paths:
             continue
         doc_paths = configured_documents(root, directory, None)
-        documents = [load_document(root, path) for path in doc_paths if rel(root, path) not in excluded]
+        documents = [load_document(root, source) for source in doc_paths if source.rel_path not in excluded]
         documents.sort(key=lambda doc: (doc.order, doc.title.lower()))
         if documents:
-            sections.append(
-                Section(
-                    id=slug(directory.name, "section"),
-                    title=directory.name.replace("-", " ").replace("_", " ").title(),
-                    description="",
-                    documents=documents,
-                )
+            section = Section(
+                id=slug(directory.name, "section"),
+                title=directory.name.replace("-", " ").replace("_", " ").title(),
+                description="",
+                documents=documents,
             )
+            assign_section_document_ids(section)
+            sections.append(section)
 
     root_docs = [
         load_document(root, path)
-        for path in sorted(root.glob("*.md"), key=lambda p: p.name.lower())
+        for path in sorted((path for path in root.iterdir() if path.is_file() and path.suffix.lower() in PACKAGE_FILE_SUFFIXES), key=lambda p: p.name.lower())
         if rel(root, path) not in excluded
     ]
     root_docs.sort(key=lambda doc: (doc.order, doc.title.lower()))
     if root_docs:
-        sections.insert(0, Section(id="documents", title="Documents", description="", documents=root_docs))
+        section = Section(id="documents", title="Documents", description="", documents=root_docs)
+        assign_section_document_ids(section)
+        sections.insert(0, section)
     return sections
 
 
@@ -507,6 +698,7 @@ def load_package(root: Path, output_override: str | None = None) -> Package:
         labels=labels,
         audience=str(config.get("audience") or ""),
         output=(root / output_name).resolve(),
+        instructions_output=(root / BUILD_INSTRUCTIONS_NAME).resolve(),
         landing_md=re.sub(r"^#\s+.+\n", "", landing_md, count=1),
         landing_intro=str(landing_config.get("intro") or config.get("intro") or ""),
         sections=load_sections(root, config, landing_path),
@@ -522,25 +714,27 @@ def compact_label_badges(labels: list[str]) -> str:
 
 
 def classification_badge(label: str, class_name: str = "label") -> str:
-    description = ALLOWED_LABELS[label]
+    level = CLASSIFICATION_LEVELS[label]
+    description = level["description"]
+    visible_label = level["visible_label"]
     return (
         f'<span class="classification-badge {class_name} label-{slug(label)}" '
         f'tabindex="0" role="button" title="{esc(description)}" aria-label="Show classification reference for {esc(label)}" '
-        f'data-tooltip="{esc(description)}">{esc(label)}</span>'
+        f'data-tooltip="{esc(description)}">{esc(visible_label)}</span>'
     )
 
 
 def primary_label(labels: list[str]) -> str | None:
     if not labels:
         return None
-    return max(labels, key=lambda label: LABEL_PRIORITY.get(label, -1))
+    return max(labels, key=lambda label: CLASSIFICATION_LEVELS.get(label, {}).get("value", -1))
 
 
 def classification_strip(labels: list[str]) -> str:
     label = primary_label(labels)
     if not label:
         return ""
-    descriptions = " ".join(ALLOWED_LABELS[item] for item in labels)
+    descriptions = " ".join(CLASSIFICATION_LEVELS[item]["description"] for item in labels)
     return (
         f'<div class="classification-strip strip-{slug(label)}">'
         f'<div class="classification-strip-label">{compact_label_badges(labels)}</div>'
@@ -557,7 +751,7 @@ def section_label_summary(section: Section) -> str:
                 labels.append(label)
     if not labels:
         return ""
-    return "Includes " + ", ".join(labels)
+    return "Includes " + ", ".join(CLASSIFICATION_LEVELS[label]["visible_label"] for label in labels)
 
 
 def build_landing(package: Package) -> str:
@@ -607,12 +801,13 @@ def build_landing(package: Package) -> str:
 
 def build_classification_reference() -> str:
     rows = []
-    for label, description in ALLOWED_LABELS.items():
+    for label, level in CLASSIFICATION_LEVELS.items():
         rows.append(
             f"""
 <article class="classification-card">
   <div>{classification_badge(label)}</div>
-  <p>{esc(description)}</p>
+  <p>{esc(level["description"])}</p>
+  <small>Sensitivity value: {level["value"]}</small>
 </article>"""
         )
     return f"""
@@ -629,36 +824,70 @@ def build_classification_reference() -> str:
 </section>"""
 
 
-def build_section_nav(section: Section) -> str:
-    return "".join(
+def build_nav_button(doc: Document) -> str:
+    return (
         f'<button class="nav-btn" data-panel="{esc(doc.id)}">'
-        f'<span>{esc(doc.title)}</span><span class="count">{esc(doc.rel_path)}</span></button>'
-        for doc in section.documents
+        f'<span class="nav-title">{esc(doc.title)}</span>'
+        f'<span class="nav-source">{esc(doc.rel_path)}</span></button>'
     )
+
+
+def build_section_nav(section: Section) -> str:
+    if section.groups:
+        return "".join(
+            f'<div class="nav-group">'
+            f'<div class="nav-group-head"><strong>{esc(group.title)}</strong>'
+            f'{f"<span>{esc(group.description)}</span>" if group.description else ""}</div>'
+            f'{"".join(build_nav_button(doc) for doc in group.documents)}</div>'
+            for group in section.groups
+        )
+    return "".join(build_nav_button(doc) for doc in section.documents)
 
 
 def build_section_panels(section: Section) -> str:
     panels = []
     for doc in section.documents:
+        label_text = " ".join(doc.labels)
+        search_blob = esc(" ".join([doc.title, doc.rel_path, doc.summary, label_text, md_to_text(doc.body_md), doc.kind]).lower())
+        summary = f'<p class="doc-summary">{esc(doc.summary)}</p>' if doc.summary else ""
+        labels = classification_strip(doc.labels)
+        if doc.kind == "pdf":
+            panels.append(
+                f"""
+<section class="panel" id="{esc(doc.id)}" hidden data-search="{search_blob}">
+  <div class="panel-head">
+    <h2>{esc(doc.title)}</h2>
+    <p class="source-path"><span>Source</span> {esc(doc.rel_path)}</p>
+  </div>
+  {labels}
+  {summary}
+  <div class="attachment-card">
+    <strong>PDF attachment</strong>
+    <p>This file is part of the package, but it is not embedded in the generated HTML. Keep the PDF beside the HTML output or publish it at the same relative path.</p>
+    <a class="btn-link" href="{esc(doc.rel_path)}" target="_blank" rel="noopener">Open PDF</a>
+  </div>
+</section>"""
+            )
+            continue
+
         headings = re.findall(r"^##\s+(.+?)\s*$", doc.body_md, re.M)
         toc = ""
         if len(headings) >= 4:
             links = "".join(
-                f'<a href="#{heading_anchor(h)}">{esc(re.sub(r"[*]+", "", h))}</a>' for h in headings
+                f'<a href="#{esc(section.id)}/{esc(doc.id)}/{heading_anchor(h, doc.id)}">{esc(re.sub(r"[*]+", "", h))}</a>' for h in headings
             )
             toc = f'<nav class="toc">{links}</nav>'
-        label_text = " ".join(doc.labels)
-        search_blob = esc(" ".join([doc.title, doc.rel_path, doc.summary, label_text, md_to_text(doc.body_md)]).lower())
-        summary = f'<p class="doc-summary">{esc(doc.summary)}</p>' if doc.summary else ""
-        labels = classification_strip(doc.labels)
         panels.append(
             f"""
 <section class="panel" id="{esc(doc.id)}" hidden data-search="{search_blob}">
-  <div class="panel-head"><h2>{esc(doc.title)}</h2><span class="meta">{esc(doc.rel_path)}</span></div>
+  <div class="panel-head">
+    <h2>{esc(doc.title)}</h2>
+    <p class="source-path"><span>Source</span> {esc(doc.rel_path)}</p>
+  </div>
   {labels}
   {summary}
   {toc}
-  <div class="doc-body">{render_markdown(doc.body_md)}</div>
+  <div class="doc-body">{render_markdown(doc.body_md, anchor_prefix=doc.id)}</div>
 </section>"""
         )
     return "".join(panels)
@@ -714,6 +943,20 @@ blockquote {
 }
 blockquote.callout-warning, blockquote.callout-caution { border-left-color: var(--tangerine); background: #fdf3e3; }
 blockquote.callout-info { border-left-color: var(--sapphire); background: #eef1fb; }
+blockquote.callout-resolution {
+  border: 1px solid #cfd4dc;
+  border-left: 5px solid var(--slate);
+  background: #f7f6f1;
+  font-family: Georgia, "Times New Roman", serif;
+  padding: 14px 18px;
+}
+blockquote.callout-resolution > p:first-child {
+  font-family: inherit;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.82em;
+  color: var(--slate);
+}
 .merge {
   background: #fdeef5; border: 1px dashed var(--magenta); border-radius: 4px;
   padding: 0 4px; color: #b00f57; font-size: 0.92em; white-space: nowrap;
@@ -798,17 +1041,40 @@ aside {
 }
 main { padding: 26px 30px 60px; min-width: 0; }
 .shell { max-width: 1000px; margin: 0 auto; }
+.nav-group {
+  margin-bottom: 14px; padding: 11px 10px 10px 12px;
+  background: #f0e8dc; border: 1px solid #d9cdbb; border-left: 4px solid var(--tangerine);
+  border-radius: 8px;
+}
+.nav-group + .nav-group { margin-top: 14px; }
+.nav-group-head {
+  display: grid; gap: 6px; padding: 0 2px 10px; color: var(--slate);
+}
+.nav-group-head strong {
+  width: fit-content; max-width: 100%; padding: 3px 7px;
+  background: rgba(7, 54, 66, 0.09); border-radius: 4px;
+  color: var(--slate); font-size: 10.5px; line-height: 1.25;
+  letter-spacing: 0.8px; text-transform: uppercase;
+}
+.nav-group-head span {
+  color: var(--muted); font-size: 12px; line-height: 1.35; font-style: italic;
+}
 .nav-btn {
-  display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%;
+  display: grid; gap: 3px; width: 100%;
   background: none; border: 1px solid transparent; border-radius: 8px;
-  padding: 8px 10px; font: inherit; font-size: 13.5px; color: var(--ink);
+  padding: 8px 10px; font: inherit; color: var(--ink);
   cursor: pointer; text-align: left;
 }
-.nav-btn:hover { background: var(--soft); }
-.nav-btn.active { background: #fff; border-color: var(--line); font-weight: 600; box-shadow: inset 3px 0 0 var(--magenta); }
-.nav-btn .count {
-  flex: 0 1 auto; font-size: 10.5px; color: var(--muted); background: var(--sand);
-  border-radius: 999px; padding: 1px 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 130px;
+.nav-group .nav-btn { padding-left: 9px; padding-right: 8px; }
+.nav-btn:hover { background: rgba(255, 255, 255, 0.58); }
+.nav-btn.active { background: #fff; border-color: var(--line); box-shadow: inset 3px 0 0 var(--magenta); }
+.nav-title {
+  font-size: 13.5px; line-height: 1.35; font-weight: 500;
+}
+.nav-btn.active .nav-title { font-weight: 700; }
+.nav-source {
+  display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: var(--muted); font-size: 10.5px; line-height: 1.25; opacity: 0.62;
 }
 .hero {
   background: var(--slate); color: #e8eeec; border-radius: 8px;
@@ -851,6 +1117,19 @@ main { padding: 26px 30px 60px; min-width: 0; }
   box-shadow: var(--shadow); padding: 16px;
 }
 .classification-card p { margin: 12px 0 0; color: var(--muted); }
+.classification-card small { display: block; margin-top: 10px; color: var(--muted); font-weight: 700; }
+.attachment-card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+  box-shadow: var(--shadow); padding: 18px 20px; margin-top: 14px;
+}
+.attachment-card strong { color: var(--slate); font-size: 16px; }
+.attachment-card p { color: var(--muted); margin: 8px 0 14px; }
+.btn-link {
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 8px; background: var(--sapphire); color: #fff; text-decoration: none;
+  font-weight: 700; padding: 8px 13px;
+}
+.btn-link:hover { background: #2547ad; }
 .classification-modal {
   position: fixed; inset: 0; z-index: 40; display: grid; place-items: center;
   background: rgba(7, 54, 66, 0.58); padding: 24px;
@@ -887,9 +1166,16 @@ main { padding: 26px 30px 60px; min-width: 0; }
 .strip-confidential-ayra { background: var(--magenta); }
 .strip-confidential-member { background: var(--sapphire); }
 .strip-confidential-board { background: var(--board-red); }
-.panel-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 6px; }
+.panel-head { display: grid; gap: 5px; margin-bottom: 6px; }
 .panel-head h2 { margin: 0; }
-.panel-head .meta { color: var(--muted); font-size: 12.5px; }
+.source-path {
+  margin: 0; color: var(--muted); font-size: 11.5px; line-height: 1.35;
+  overflow-wrap: anywhere; opacity: 0.66;
+}
+.source-path span {
+  margin-right: 5px; color: var(--slate); font-size: 10px; font-weight: 700;
+  letter-spacing: 0.6px; text-transform: uppercase; opacity: 0.68;
+}
 .doc-summary { color: var(--muted); max-width: 78ch; }
 .doc-body {
   background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
@@ -904,6 +1190,10 @@ main { padding: 26px 30px 60px; min-width: 0; }
 .toc a { text-decoration: none; }
 .toc a:hover { text-decoration: underline; }
 .footer-note { margin-top: 40px; color: var(--muted); font-size: 12px; text-align: center; }
+.instructions-shell { padding: 26px 30px 60px; }
+.instructions-body { margin-top: 22px; }
+.instructions-body h2 { margin-top: 1.8em; }
+.instructions-body h3 { margin-top: 1.5em; }
 @media (max-width: 980px) {
   .layout, .layout.no-aside { grid-template-columns: 1fr; }
   aside { position: static; height: auto; max-height: 42vh; border-right: 0; border-bottom: 1px solid var(--line); }
@@ -980,6 +1270,26 @@ function syncHash() {
   history.replaceState(null, "", "#" + state.view + (hasNav && panel ? "/" + panel : ""));
 }
 
+function scrollToAnchor(anchor) {
+  if (!anchor) return;
+  requestAnimationFrame(() => {
+    const target = document.getElementById(anchor);
+    if (target) target.scrollIntoView({ block: "start" });
+  });
+}
+
+function openRoute(view, panel, anchor, replaceHash) {
+  if (!view || !document.getElementById("view-" + view)) return false;
+  state.panel[view] = panel || state.panel[view];
+  setView(view, true);
+  if (panel && document.getElementById(panel)) setPanel(panel, true);
+  if (replaceHash) {
+    history.replaceState(null, "", "#" + view + (panel ? "/" + panel : "") + (anchor ? "/" + anchor : ""));
+  }
+  scrollToAnchor(anchor);
+  return true;
+}
+
 function applySearch() {
   const q = $("#search").value.trim().toLowerCase();
   $("#search-count").textContent = "";
@@ -1019,6 +1329,15 @@ document.addEventListener("click", (event) => {
   }
   const tab = event.target.closest(".tab");
   if (tab) return setView(tab.dataset.view);
+  const tocLink = event.target.closest(".toc a");
+  if (tocLink) {
+    const hash = tocLink.getAttribute("href") || "";
+    const [view, panel, anchor] = hash.replace(/^#/, "").split("/");
+    if (openRoute(view, panel, anchor, true)) {
+      event.preventDefault();
+      return;
+    }
+  }
   const navButton = event.target.closest(".nav-btn");
   if (navButton) { setPanel(navButton.dataset.panel); window.scrollTo(0, 0); return; }
   const tile = event.target.closest("[data-go]");
@@ -1069,14 +1388,19 @@ function updateStickyOffset() {
   document.documentElement.style.setProperty("--sticky-offset", (topHeight + searchHeight + 10) + "px");
 }
 
-(function init() {
+function navigateFromHash(skipHash) {
   const hash = location.hash.replace(/^#/, "");
-  const [view, panel] = hash.split("/");
-  if (view && document.getElementById("view-" + view)) {
-    if (panel && document.getElementById(panel)) state.panel[view] = panel;
-    return setView(view, true);
+  const [view, panel, anchor] = hash.split("/");
+  if (openRoute(view, panel, anchor, false)) {
+    return;
   }
-  setView("start", true);
+  setView("start", skipHash);
+}
+
+window.addEventListener("hashchange", () => navigateFromHash(false));
+
+(function init() {
+  navigateFromHash(true);
 })();
 """
 
@@ -1108,7 +1432,7 @@ HTML_TEMPLATE = """<!doctype html>
   <main>
     <div class="shell">
       __VIEWS__
-      <p class="footer-note">Generated __STAMP__ from markdown sources in this package using Ayra Briefing Package Viewer.</p>
+      <p class="footer-note">Generated __STAMP__ from markdown sources in this package using Ayra Briefing Package Viewer · <a href="__BUILD_INSTRUCTIONS_HREF__">Build instructions</a></p>
     </div>
   </main>
 </div>
@@ -1127,7 +1451,70 @@ HTML_TEMPLATE = """<!doctype html>
 """
 
 
+BUILD_INSTRUCTIONS_TEMPLATE = """<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Build Instructions</title>
+<style>__CSS__</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="word">ayra<b>.</b></span></div>
+  <nav class="tabs"><a class="tab active" href="__PACKAGE_HREF__">Back to package</a></nav>
+</header>
+<main>
+  <div class="shell instructions-shell">
+    <section class="hero">
+      <div class="hero-kicker">Ayra Briefing Package Viewer</div>
+      <h1>Build Instructions</h1>
+      <p>Use these instructions to assemble a package from Markdown files and rebuild the HTML viewer.</p>
+    </section>
+    <div class="doc-body instructions-body">__BODY__</div>
+    <p class="footer-note">Generated __STAMP__ from the viewer authoring instructions.</p>
+  </div>
+</main>
+</body>
+</html>
+"""
+
+
+def read_instruction_source(path: Path, title: str, resource_name: str) -> str:
+    if path.exists():
+        return path.read_text(encoding="utf-8")
+    try:
+        return (
+            resources.files("ayra_package_viewer.instructions")
+            .joinpath(resource_name)
+            .read_text(encoding="utf-8")
+        )
+    except (FileNotFoundError, ModuleNotFoundError):
+        pass
+    return f"# {title}\n\nInstruction source not found at `{path}`."
+
+
+def build_instructions_html(package: Package) -> str:
+    authoring = read_instruction_source(AUTHORING_SOURCE, "Authoring Guide", "authoring.md")
+    patterns = read_instruction_source(MARKDOWN_PATTERNS_SOURCE, "Markdown Patterns", "markdown-patterns.md")
+    body_md = (
+        "# Authoring Overview\n\n"
+        + re.sub(r"^#\s+.+\n", "", authoring, count=1)
+        + "\n\n# Copy-Paste Markdown Patterns\n\n"
+        + re.sub(r"^#\s+.+\n", "", patterns, count=1)
+    )
+    package_href = package.output.name
+    return (
+        BUILD_INSTRUCTIONS_TEMPLATE
+        .replace("__CSS__", CSS)
+        .replace("__BODY__", render_markdown(body_md, highlight=False))
+        .replace("__PACKAGE_HREF__", esc(package_href))
+        .replace("__STAMP__", date.today().isoformat())
+    )
+
+
 def build_html(package: Package) -> str:
+    register_wikilinks(package)
     tabs = [
         '<button class="tab" data-view="start">Start</button>',
     ]
@@ -1152,6 +1539,7 @@ def build_html(package: Package) -> str:
         .replace("__NAV__", "".join(nav))
         .replace("__VIEWS__", "".join(views))
         .replace("__CLASSIFICATION_REFERENCE__", build_classification_reference())
+        .replace("__BUILD_INSTRUCTIONS_HREF__", esc(package.instructions_output.name))
         .replace("__STAMP__", date.today().isoformat())
     )
 
@@ -1163,6 +1551,7 @@ def build(package_dir: Path, output_override: str | None = None) -> Package:
     html = build_html(package)
     package.output.parent.mkdir(parents=True, exist_ok=True)
     package.output.write_text(html, encoding="utf-8")
+    package.instructions_output.write_text(build_instructions_html(package), encoding="utf-8")
     return package
 
 
@@ -1177,6 +1566,7 @@ def main(argv: list[str] | None = None) -> None:
         output_override = str(Path(output_override))
     package = build(Path(args.package_dir), output_override)
     print(f"Wrote {package.output}")
+    print(f"Wrote {package.instructions_output}")
     print(f"  Package : {package.title}")
     print(f"  Labels  : {', '.join(package.labels)}")
     print(f"  Sections: {len(package.sections)}")
